@@ -202,7 +202,8 @@ class _AlphaJumpBarState extends State<AlphaJumpBar> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final nocturne = PlezyLayout.isNocturne(context);
-    final tk = tokens(context);
+    // Only Nocturne reads the mono tokens; classic draws from the scheme.
+    final tk = nocturne ? tokens(context) : null;
     final width = AlphaJumpBar.widthOf(context);
 
     return Focus(
@@ -260,7 +261,7 @@ class _AlphaJumpBarState extends State<AlphaJumpBar> {
                   foregroundDecoration: nocturne
                       ? BoxDecoration(
                           borderRadius: BorderRadius.all(Radius.circular(width / 2)),
-                          border: Border.all(color: tk.outline),
+                          border: Border.all(color: tk!.outline),
                         )
                       : null,
                   child: Column(
@@ -274,7 +275,7 @@ class _AlphaJumpBarState extends State<AlphaJumpBar> {
                       if (isHighlighted) {
                         // Nocturne inverts the focused letter, like its other focus.
                         decoration = BoxDecoration(
-                          color: nocturne ? tk.text : colorScheme.primary,
+                          color: tk?.text ?? colorScheme.primary,
                           shape: BoxShape.circle,
                         );
                       } else if (isCurrent && nocturne) {
@@ -288,9 +289,9 @@ class _AlphaJumpBarState extends State<AlphaJumpBar> {
 
                       Color letterColor;
                       if (isHighlighted) {
-                        letterColor = nocturne ? tk.bg : colorScheme.onPrimary;
+                        letterColor = tk?.bg ?? colorScheme.onPrimary;
                       } else if (isCurrent) {
-                        letterColor = nocturne ? tk.accent : colorScheme.primary;
+                        letterColor = tk?.accent ?? colorScheme.primary;
                       } else {
                         letterColor = colorScheme.onSurface;
                       }
