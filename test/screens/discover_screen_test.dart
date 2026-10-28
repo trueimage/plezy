@@ -769,7 +769,9 @@ void main() {
   });
 
   for (final isTv in [false, true]) {
-    testWidgets('Nocturne episode spotlight Details opens details with Episode Action Play (TV: $isTv)', (tester) async {
+    testWidgets('Nocturne episode spotlight Details opens details with Episode Action Play (TV: $isTv)', (
+      tester,
+    ) async {
       final settings = await SettingsService.getInstance();
       await settings.write(SettingsService.episodeAction, EpisodeAction.play);
       final episode = testMediaItem(
@@ -1190,7 +1192,7 @@ Future<void> _pumpDiscoverShell(
         child: InputModeTracker(
           child: MaterialApp(
             theme: theme ?? monoTheme(MonoPalette.dark),
-            navigatorObservers: [if (observer != null) observer],
+            navigatorObservers: [?observer],
             home: MainScreenFocusScope(
               focusSidebar: () {},
               sideNavigationWidth: SideNavigationRailState.expandedWidth,
