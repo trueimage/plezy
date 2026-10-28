@@ -12,6 +12,7 @@ import 'package:plezy/services/download_manager_service.dart';
 import 'package:plezy/services/download_storage_service.dart';
 import 'package:plezy/services/jellyfin_api_cache.dart';
 import 'package:plezy/services/plex_api_cache.dart';
+import 'package:plezy/services/settings_service.dart' as settings;
 import 'package:plezy/widgets/episode_card.dart';
 import 'package:provider/provider.dart';
 
@@ -21,17 +22,25 @@ import 'golden_fixtures.dart';
 import 'golden_harness.dart';
 
 /// The media detail screen: the hero for a movie in every theme, and a
-/// season's episode list in Light and Dark.
+/// season's episode list in Light, Dark and Nocturne.
 void main() {
-  goldenMatrix(
-    'detail_hero',
-    themes: allGoldenThemes,
-    body: (tester, golden) => _pumpDetail(tester, golden, goldenDetailMovie),
+  // Classic themes first: Nocturne bakes its own scrim gradients into the
+  // process-wide RasterizedGradient strip cache, which would push out the ones
+  // the classic TV backdrop has already baked and change how it paints.
+  bool classic(GoldenTheme theme) => theme.mode != settings.ThemeMode.nocturne;
+  _detailMatrices(
+    themes: allGoldenThemes.where(classic).toList(),
+    episodeThemes: screenGoldenThemes.where(classic).toList(),
   );
+  _detailMatrices(themes: [nocturneGoldenTheme], episodeThemes: [nocturneGoldenTheme]);
+}
+
+void _detailMatrices({required List<GoldenTheme> themes, required List<GoldenTheme> episodeThemes}) {
+  goldenMatrix('detail_hero', themes: themes, body: (tester, golden) => _pumpDetail(tester, golden, goldenDetailMovie));
 
   goldenMatrix(
     'episode_list',
-    themes: screenGoldenThemes,
+    themes: episodeThemes,
     body: (tester, golden) async {
       await _pumpDetail(tester, golden, goldenSeason);
       // TV lays a season's episodes out as a card row that is already on
