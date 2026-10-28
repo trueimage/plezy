@@ -392,7 +392,13 @@ ThemeData _buildMonoTheme(PlezyThemeSpec spec, {required TargetPlatform platform
       scrolledUnderElevation: 0,
       centerTitle: false,
       foregroundColor: c.text,
-      titleTextStyle: TextStyle(color: c.text, fontSize: 18, fontWeight: .w700, letterSpacing: -0.2),
+      titleTextStyle: TextStyle(
+        color: c.text,
+        fontSize: 18,
+        fontWeight: .w700,
+        letterSpacing: -0.2,
+        fontFamily: type.fontFamily,
+      ),
     ),
     textTheme: Typography.englishLike2021
         .apply(bodyColor: c.text, displayColor: c.text)
@@ -401,14 +407,17 @@ ThemeData _buildMonoTheme(PlezyThemeSpec spec, {required TargetPlatform platform
           titleMedium: const TextStyle(fontWeight: .w600),
           bodyMedium: TextStyle(color: c.text),
           bodySmall: TextStyle(color: c.textMuted),
-        ),
+        )
+        // An explicit text theme does not take [fontFamily]; a theme with its
+        // own family states it here. Null keeps the platform face.
+        .apply(fontFamily: type.fontFamily),
     cardTheme: CardThemeData(
       color: c.surface,
       elevation: 0,
       margin: .zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(surfaces.cardRadius))),
     ),
-    inputDecorationTheme: _inputDecorationTheme(c.text, c.textMuted),
+    inputDecorationTheme: _inputDecorationTheme(c.text, c.textMuted, fontFamily: type.fontFamily),
     // The Material 3 defaults, stated so a theme's [SurfaceTokens] can move
     // them: the colours are the ones Material derives from the scheme.
     dialogTheme: DialogThemeData(
@@ -464,7 +473,7 @@ ThemeData _buildMonoTheme(PlezyThemeSpec spec, {required TargetPlatform platform
       backgroundColor: c.bg,
       elevation: 0,
       indicatorColor: Colors.transparent,
-      labelTextStyle: WidgetStatePropertyAll(TextStyle(color: c.textMuted, fontSize: 11)),
+      labelTextStyle: WidgetStatePropertyAll(TextStyle(color: c.textMuted, fontSize: 11, fontFamily: type.fontFamily)),
       iconTheme: WidgetStateProperty.resolveWith((states) {
         final active = states.contains(WidgetState.selected);
         return IconThemeData(opacity: active ? 1 : 0.6, size: 22, color: active ? c.accent : c.text);
@@ -476,7 +485,7 @@ ThemeData _buildMonoTheme(PlezyThemeSpec spec, {required TargetPlatform platform
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
       backgroundColor: c.surface,
-      contentTextStyle: TextStyle(color: c.text),
+      contentTextStyle: TextStyle(color: c.text, fontFamily: type.fontFamily),
       actionTextColor: c.text,
       elevation: 6,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
@@ -513,7 +522,7 @@ ThemeData _buildMonoTheme(PlezyThemeSpec spec, {required TargetPlatform platform
 }
 
 /// Brighter fill on focus so input focus is visible inside TV overscan.
-InputDecorationTheme _inputDecorationTheme(Color text, Color textMuted) {
+InputDecorationTheme _inputDecorationTheme(Color text, Color textMuted, {String? fontFamily}) {
   final unfocusedFill = text.withValues(alpha: 0.08);
   final focusedFill = text.withValues(alpha: 0.18);
   const border = OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide.none);
@@ -527,6 +536,6 @@ InputDecorationTheme _inputDecorationTheme(Color text, Color textMuted) {
     border: border,
     enabledBorder: border,
     focusedBorder: border,
-    hintStyle: TextStyle(color: textMuted),
+    hintStyle: TextStyle(color: textMuted, fontFamily: fontFamily),
   );
 }

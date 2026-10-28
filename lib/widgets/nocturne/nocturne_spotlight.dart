@@ -143,7 +143,11 @@ class NocturneBackdrop extends StatelessWidget {
         final artHeight = size.height * heightFactor;
         final aspect = size.width / math.max(1, artHeight);
         final paths = media?.heroArtCandidates(containerAspectRatio: aspect) ?? const <String>[];
-        final fallback = _MissingArtBackdrop(title: media?.grandparentTitle ?? media?.displayTitle);
+        // Nothing in the spotlight (an empty or unreachable library): the bare
+        // canvas, not a tint for no title.
+        final fallback = media == null
+            ? const SizedBox.shrink()
+            : _MissingArtBackdrop(title: media.grandparentTitle ?? media.displayTitle);
         return Stack(
           fit: StackFit.expand,
           children: [

@@ -6,6 +6,7 @@ import 'package:plezy/media/media_hub.dart';
 import 'package:plezy/media/media_item.dart';
 import 'package:plezy/media/media_kind.dart';
 import 'package:plezy/media/media_library.dart';
+import 'package:plezy/media/media_person.dart';
 import 'package:plezy/media/media_sort.dart';
 import 'package:plezy/media/media_role.dart';
 import 'package:plezy/media/media_server_client.dart';
@@ -367,6 +368,29 @@ class GoldenMediaServerClient implements MediaServerClient {
     bool includePlaybackHubs = true,
     MediaKind? libraryKind,
     HubFetchDiagnostics? diagnostics,
+  }) async => const [];
+
+  /// Titles containing [query], films first.
+  @override
+  Future<List<MediaItem>> searchItems(
+    String query, {
+    int limit = 100,
+    AbortController? abort,
+    Set<String> excludedLibraryIds = const {},
+  }) async {
+    final needle = query.toLowerCase();
+    return [
+      for (final item in [...goldenMovies, goldenShow, ...goldenEpisodes])
+        if ((item.title ?? '').toLowerCase().contains(needle)) item,
+    ].take(limit).toList();
+  }
+
+  @override
+  Future<List<MediaPerson>> searchPeople(
+    String query, {
+    int limit = defaultPeopleSearchLimit,
+    AbortController? abort,
+    Set<String> excludedLibraryIds = const {},
   }) async => const [];
 
   /// The browse library's films.
