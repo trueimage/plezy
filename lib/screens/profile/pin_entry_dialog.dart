@@ -619,6 +619,7 @@ class _DigitBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final focusColor = FocusTheme.getFocusBorderColor(context);
+    final focus = FocusTheme.of(context);
 
     return Column(
       mainAxisSize: .min,
@@ -629,11 +630,11 @@ class _DigitBox extends StatelessWidget {
           height: 56,
           alignment: .center,
           decoration: BoxDecoration(
-            borderRadius: const BorderRadius.all(Radius.circular(FocusTheme.defaultBorderRadius)),
+            borderRadius: BorderRadius.all(Radius.circular(focus.radius)),
             border: Border.fromBorderSide(
               BorderSide(
                 color: isActive ? focusColor : theme.colorScheme.outlineVariant,
-                width: isActive ? FocusTheme.focusBorderWidth : 1.5,
+                width: isActive ? focus.ringWidth : 1.5,
               ),
             ),
             color: isActive ? focusColor.withValues(alpha: 0.08) : Colors.transparent,

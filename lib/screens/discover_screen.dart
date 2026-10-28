@@ -8,6 +8,7 @@ import 'package:plezy/widgets/app_icon.dart';
 import '../widgets/server_activities_button.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
+import '../focus/focus_theme.dart';
 import '../focus/focusable_action_bar.dart';
 import '../focus/hub_vertical_navigation.dart';
 import '../focus/locked_hub_controller.dart';
@@ -1630,7 +1631,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                   color: backgroundColor,
                   borderRadius: BorderRadius.all(Radius.circular(isTv ? 32 : 24)),
                   boxShadow: showFocus
-                      ? [BoxShadow(color: colorScheme.primary.withValues(alpha: 0.35), blurRadius: 28, spreadRadius: 4)]
+                      ? FocusTheme.glowShadows(FocusTheme.of(context).buttonGlow, colorScheme.primary)
                       : null,
                 ),
                 child: Row(

@@ -18,7 +18,7 @@ Widget buildFocusChrome(
   BuildContext context, {
   required bool showFocus,
   required Duration duration,
-  double borderRadius = FocusTheme.defaultBorderRadius,
+  double? borderRadius,
   BorderRadius? borderRadii,
   Color? focusColor,
   bool useBackgroundFocus = false,
@@ -33,7 +33,12 @@ Widget buildFocusChrome(
     card = CardFocusScope(showFocus: showFocus, child: child);
   } else {
     final decoration = useBackgroundFocus
-        ? FocusTheme.focusBackgroundDecoration(isFocused: showFocus, borderRadius: borderRadius, radii: borderRadii)
+        ? FocusTheme.focusBackgroundDecoration(
+            context,
+            isFocused: showFocus,
+            borderRadius: borderRadius,
+            radii: borderRadii,
+          )
         : FocusTheme.focusDecoration(
             context,
             isFocused: showFocus,
@@ -51,8 +56,8 @@ Widget buildFocusChrome(
   if (useFocusGlow) {
     card = FocusGlowOverlay(
       isFocused: showGlow ?? showFocus,
-      borderRadius: borderRadius,
-      color: focusColor ?? FocusTheme.getFocusBorderColor(context),
+      borderRadius: borderRadius ?? FocusTheme.of(context).radius,
+      color: focusColor ?? FocusTheme.getFocusGlowColor(context),
       glowSize: glowSize,
       child: card,
     );

@@ -18,6 +18,7 @@ import '../widgets/rating_bottom_sheet.dart';
 
 import '../focus/dpad_navigator.dart';
 import '../focus/dpad_select_long_press_controller.dart';
+import '../focus/focus_theme.dart';
 import '../focus/focusable_action_bar.dart';
 import '../focus/focusable_wrapper.dart';
 import '../focus/hub_vertical_navigation.dart';
@@ -4348,6 +4349,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
       fullCardLayout: svc.read(SettingsService.tvFullCardLayout),
       gridSpacing: svc.read(SettingsService.gridSpacing),
       scale: scale,
+      focusRingWidth: FocusTheme.of(context).ringWidth,
       tallPosterScale: _tvDetailTallPosterScale,
       widePosterScale: 1.0,
     );

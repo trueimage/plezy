@@ -131,12 +131,15 @@ class _FocusGlowOverlayState extends State<FocusGlowOverlay> {
     _portalInTree = true;
 
     final duration = FocusTheme.getAnimationDuration(context);
+    // Resolved here: the overlay builds in the root Overlay's context, which
+    // may not carry a nested theme.
+    final focus = FocusTheme.of(context);
 
     return OverlayPortal(
       controller: _controller,
       overlayChildBuilder: (overlayContext) {
         final size = widget.glowSize ?? _link.leaderSize;
-        final extent = FocusTheme.focusGlowExtent;
+        final extent = focus.glowExtent;
 
         return CompositedTransformFollower(
           link: _link,
@@ -156,7 +159,7 @@ class _FocusGlowOverlayState extends State<FocusGlowOverlay> {
                       painter: _FocusGlowPainter(
                         rect: Offset(extent, extent) & size,
                         borderRadius: widget.borderRadius,
-                        shadows: FocusTheme.focusGlowShadows(widget.color),
+                        shadows: FocusTheme.focusGlowShadows(widget.color, focus),
                       ),
                     ),
             ),

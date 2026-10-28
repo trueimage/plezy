@@ -10,7 +10,7 @@ import 'widgets/player_focus_disc.dart';
 /// Guarantees a 40px tap target without changing the idle appearance. With a
 /// [focusNode] it is D-pad/keyboard focusable and shows the player's focus
 /// treatment: a solid disc with the icon inverted ([PlayerFocusDisc]), scaled
-/// by [FocusTheme.playerControlFocusScale]. With a [label] it becomes a pill
+/// by the theme's `FocusTokens.controlScale`. With a [label] it becomes a pill
 /// showing the icon and the label, and the focus fill follows the pill.
 class VideoControlButton extends StatelessWidget {
   final IconData icon;
@@ -130,7 +130,7 @@ class VideoControlButton extends StatelessWidget {
         checked: checked,
         autoScroll: false,
         delegateFocusBorder: true,
-        focusScale: FocusTheme.playerControlFocusScale,
+        focusScale: FocusTheme.of(context).controlScale,
         child: PlayerFocusDisc(
           iconColor: idleColor,
           isActive: isActive,

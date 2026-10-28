@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import '../services/device_performance.dart';
 import '../theme/mono_tokens.dart';
 import '../utils/platform_detector.dart';
+import 'focus_tokens.dart';
 
 class FocusTheme {
   FocusTheme._();
 
+  // The classic focus every built-in theme draws: the [FocusTokens] defaults.
   static const double focusScale = 1.02;
   static const double fullCardFocusScale = 1.03;
 
@@ -18,15 +20,30 @@ class FocusTheme {
   static const double focusGlowOuterBlurRadius = 34;
   static const double focusGlowSpreadRadius = 1.5;
 
+  /// The focus the theme draws: its [FocusTokens], or [FocusTokens.fallback]
+  /// when it carries none, swapped for [FocusTokens.highContrast] when the
+  /// platform asks for high contrast and the theme has one.
+  static FocusTokens of(BuildContext context) {
+    final focus = Theme.of(context).extension<FocusTokens>() ?? FocusTokens.fallback;
+    final highContrast = focus.highContrast;
+    if (highContrast == null) return focus;
+    return MediaQuery.maybeHighContrastOf(context) ?? false ? highContrast : focus;
+  }
+
   static Color getFocusBorderColor(BuildContext context) {
-    return Theme.of(context).colorScheme.primary;
+    return of(context).ringColor ?? Theme.of(context).colorScheme.primary;
+  }
+
+  /// The colour of the focus glow around a card.
+  static Color getFocusGlowColor(BuildContext context) {
+    return of(context).glowColor ?? Theme.of(context).colorScheme.primary;
   }
 
   static Duration getAnimationDuration(BuildContext context) {
     // Reduced tier: snap focus transitions (scale/border/glow) instead of
     // animating — each animation frame re-rasterizes the focused card.
     if (DevicePerformance.isReduced) return Duration.zero;
-    return Theme.of(context).extension<MonoTokens>()?.fast ?? const Duration(milliseconds: 150);
+    return of(context).duration ?? Theme.of(context).extension<MonoTokens>()?.fast ?? const Duration(milliseconds: 150);
   }
 
   /// How long a TV row (or the hub list) glides after one D-pad focus step.
@@ -43,58 +60,55 @@ class FocusTheme {
       PlatformDetector.isAppleTV() ? const Duration(milliseconds: 500) : const Duration(milliseconds: 150);
 
   /// [radii] overrides [borderRadius] when per-corner radii are needed
-  /// (M3E grouped cards: large outer / small inner corners).
+  /// (M3E grouped cards: large outer / small inner corners). A null
+  /// [borderRadius] or [borderStrokeAlign] uses the theme's.
   static BoxDecoration focusDecoration(
     BuildContext context, {
     required bool isFocused,
-    double borderRadius = defaultBorderRadius,
+    double? borderRadius,
     BorderRadius? radii,
-    double borderStrokeAlign = BorderSide.strokeAlignInside,
+    double? borderStrokeAlign,
     Color? color,
   }) {
+    final focus = of(context);
     final focusColor = color ?? getFocusBorderColor(context);
 
     return BoxDecoration(
-      borderRadius: radii ?? BorderRadius.circular(borderRadius),
+      borderRadius: radii ?? BorderRadius.circular(borderRadius ?? focus.radius),
       border: Border.all(
         color: isFocused ? focusColor : Colors.transparent,
-        width: focusBorderWidth,
-        strokeAlign: borderStrokeAlign,
+        width: focus.ringWidth,
+        strokeAlign: borderStrokeAlign ?? focus.ringStrokeAlign,
       ),
     );
   }
 
-  /// The focus glow as a list of [BoxShadow]s.
+  /// The focus glow around a card as a list of [BoxShadow]s.
   ///
   /// Rendered by [FocusGlowOverlay] in the root overlay so the glow paints
   /// above sibling cards on all four sides (an in-tree background shadow is
   /// occluded by later-painted neighbours, which produced the one-sided halo).
-  static List<BoxShadow> focusGlowShadows(Color color) {
-    return [
-      BoxShadow(
-        color: color.withValues(alpha: 0.34),
-        blurRadius: focusGlowInnerBlurRadius,
-        spreadRadius: focusGlowSpreadRadius,
-      ),
-      BoxShadow(color: color.withValues(alpha: 0.2), blurRadius: focusGlowOuterBlurRadius),
-    ];
-  }
+  static List<BoxShadow> focusGlowShadows(Color color, [FocusTokens focus = FocusTokens.fallback]) =>
+      glowShadows(focus.glow, color);
 
-  /// How far the focus glow visibly reaches beyond the card edge. Used to size
-  /// the overlay paint area so the blur is not clipped.
-  static double get focusGlowExtent => focusGlowOuterBlurRadius * 2 + focusGlowSpreadRadius;
+  /// [layers] tinted with [color].
+  static List<BoxShadow> glowShadows(List<FocusGlowLayer> layers, Color color) => [
+    for (final layer in layers) layer.shadow(color),
+  ];
 
   /// Build focus decoration with background color instead of border.
   /// Useful for video controls where it should match the native hover style.
   /// [radii] overrides [borderRadius] when per-corner radii are needed.
-  static BoxDecoration focusBackgroundDecoration({
+  static BoxDecoration focusBackgroundDecoration(
+    BuildContext context, {
     required bool isFocused,
-    double borderRadius = defaultBorderRadius,
+    double? borderRadius,
     BorderRadius? radii,
   }) {
+    final focus = of(context);
     return BoxDecoration(
-      borderRadius: radii ?? BorderRadius.circular(borderRadius),
-      color: isFocused ? Colors.white.withValues(alpha: 0.2) : Colors.transparent,
+      borderRadius: radii ?? BorderRadius.circular(borderRadius ?? focus.radius),
+      color: isFocused ? focus.backgroundFill : Colors.transparent,
     );
   }
 
@@ -106,12 +120,13 @@ class FocusTheme {
   static BoxDecoration textFillFocusDecoration(
     BuildContext context, {
     required bool isFocused,
-    double borderRadius = defaultBorderRadius,
+    double? borderRadius,
     BorderRadius? radii,
   }) {
+    final focus = of(context);
     return BoxDecoration(
-      borderRadius: radii ?? BorderRadius.circular(borderRadius),
-      color: isFocused ? tokens(context).text.withValues(alpha: 0.12) : Colors.transparent,
+      borderRadius: radii ?? BorderRadius.circular(borderRadius ?? focus.radius),
+      color: isFocused ? tokens(context).text.withValues(alpha: focus.textFillAlpha) : Colors.transparent,
     );
   }
 }

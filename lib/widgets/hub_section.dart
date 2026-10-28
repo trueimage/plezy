@@ -643,7 +643,7 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
                         : EdgeInsets.symmetric(horizontal: cardGap / 2);
 
                     final containerHeight = posterHeight + (isTv ? 48 : 33);
-                    final focusBorderWidth = FocusTheme.focusBorderWidth;
+                    final focusBorderWidth = FocusTheme.of(context).ringWidth;
                     final focusExtra = focusBorderWidth * 2; // border on both sides
                     _itemExtent = cardWidth + focusExtra + cardGap;
 

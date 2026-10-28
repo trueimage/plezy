@@ -152,7 +152,7 @@ class _VolumeControlState extends State<VolumeControl> {
                     onFocusChange: _handleFocusChange,
                     autoScroll: false,
                     delegateFocusBorder: true,
-                    focusScale: FocusTheme.playerControlFocusScale,
+                    focusScale: FocusTheme.of(context).controlScale,
                     semanticLabel: _isAdjustMode ? t.videoControls.volumeSlider : muteLabel,
                     child: PlayerFocusDisc(
                       iconColor: Colors.white,

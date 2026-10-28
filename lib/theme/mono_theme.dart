@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../focus/focus_tokens.dart';
 import 'gapped_track_shape.dart';
 import 'mono_tokens.dart';
 import 'plezy_theme_spec.dart';
@@ -409,6 +410,7 @@ ThemeData _buildMonoTheme(PlezyThemeSpec spec, {required TargetPlatform platform
         textMuted: c.textMuted,
         accent: c.accent,
       ),
+      spec.focus ?? FocusTokens.fallback,
     ],
   );
 }
