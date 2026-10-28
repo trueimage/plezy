@@ -229,5 +229,6 @@ abstract final class NocturneTheme {
     detailTopScrim: topScrim,
     badgeShadows: const [],
     progressHeight: 5,
+    badgeGrammar: const BadgeGrammar(unwatchedDot: true, countTopLeft: true, reasonTag: true),
   );
 }

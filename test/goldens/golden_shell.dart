@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plezy/media/media_library.dart';
 import 'package:plezy/navigation/navigation_tabs.dart';
 import 'package:plezy/providers/hidden_libraries_provider.dart';
 import 'package:plezy/providers/libraries_provider.dart';
@@ -29,10 +30,11 @@ Future<void> pumpGoldenShell(
   NavigationTabId selectedTab = NavigationTabId.libraries,
   List<SingleChildWidget> providers = const [],
   MultiServerProvider? multiServerProvider,
+  List<MediaLibrary>? libraries,
   bool settle = true,
 }) async {
   final librariesProvider = LibrariesProvider();
-  await librariesProvider.updateLibraryOrder(goldenLibraries);
+  await librariesProvider.updateLibraryOrder(libraries ?? goldenLibraries);
   addTearDown(librariesProvider.dispose);
   final hiddenLibrariesProvider = HiddenLibrariesProvider();
   await hiddenLibrariesProvider.ensureInitialized();

@@ -7,6 +7,7 @@ import '../media/media_kind.dart';
 import '../services/settings_service.dart';
 import '../theme/mono_tokens.dart';
 import 'app_icon.dart';
+import 'artwork_badges.dart';
 import 'media_progress_bar.dart';
 import 'unwatched_count_badge.dart';
 import '../theme/surface_tokens.dart';
@@ -82,6 +83,7 @@ class WatchedIndicator extends StatelessWidget {
     final hasActiveProgress = item.hasActiveProgress;
     final unwatched = item.unwatchedCount;
     final surfaces = SurfaceTokens.of(context);
+    final grammar = surfaces.badgeGrammar;
     final barRadius = BorderRadius.only(
       bottomLeft: Radius.circular(size.barRadius),
       bottomRight: Radius.circular(size.barRadius),
@@ -109,6 +111,17 @@ class WatchedIndicator extends StatelessWidget {
               ),
             ),
           ),
+        // Unwatched dot for movies nobody has started
+        if (showWatched &&
+            grammar.unwatchedDot &&
+            item.kind == MediaKind.movie &&
+            !item.isWatched &&
+            !hasActiveProgress)
+          Positioned(
+            top: size.checkInset + size.checkPadding,
+            right: size.checkInset + size.checkPadding,
+            child: UnwatchedDot(size: size.checkIconSize * 0.75),
+          ),
         // Unwatched count for shows/seasons
         if (showCount &&
             !item.isWatched &&
@@ -117,8 +130,14 @@ class WatchedIndicator extends StatelessWidget {
             unwatched > 0)
           Positioned(
             top: size.checkInset,
-            right: size.checkInset,
-            child: UnwatchedCountBadge(count: unwatched, size: size.badgeSize, fontSize: size.badgeFontSize),
+            right: grammar.countTopLeft ? null : size.checkInset,
+            left: grammar.countTopLeft ? size.checkInset : null,
+            child: UnwatchedCountBadge(
+              count: unwatched,
+              size: size.badgeSize,
+              fontSize: size.badgeFontSize,
+              accent: grammar.countTopLeft,
+            ),
           ),
         // Progress bar for partially watched content (episodes/movies)
         if (hasActiveProgress)

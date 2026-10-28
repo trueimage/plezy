@@ -12,7 +12,10 @@ class UnwatchedCountBadge extends StatelessWidget {
   final double size;
   final double fontSize;
 
-  const UnwatchedCountBadge({super.key, required this.count, this.size = 24, this.fontSize = 12});
+  /// Fill the pill with the accent colour (Nocturne's badge grammar).
+  final bool accent;
+
+  const UnwatchedCountBadge({super.key, required this.count, this.size = 24, this.fontSize = 12, this.accent = false});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +25,7 @@ class UnwatchedCountBadge extends StatelessWidget {
       constraints: BoxConstraints(minWidth: size),
       padding: EdgeInsets.symmetric(horizontal: size * 0.2),
       decoration: BoxDecoration(
-        color: surfaces.badgeFill ?? tokens(context).text,
+        color: accent ? tokens(context).accent : surfaces.badgeFill ?? tokens(context).text,
         borderRadius: BorderRadius.circular(size / 2),
         boxShadow: surfaces.badgeShadows,
       ),
@@ -35,7 +38,7 @@ class UnwatchedCountBadge extends StatelessWidget {
           maxLines: 1,
           softWrap: false,
           style: TextStyle(
-            color: surfaces.badgeForeground ?? tokens(context).bg,
+            color: accent ? tokens(context).bg : surfaces.badgeForeground ?? tokens(context).bg,
             fontSize: fontSize,
             fontWeight: .bold,
           ),

@@ -1,10 +1,12 @@
 import 'package:plezy/media/ids.dart';
+import 'package:plezy/media/library_filter_result.dart';
 import 'package:plezy/media/library_query.dart';
 import 'package:plezy/media/media_backend.dart';
 import 'package:plezy/media/media_hub.dart';
 import 'package:plezy/media/media_item.dart';
 import 'package:plezy/media/media_kind.dart';
 import 'package:plezy/media/media_library.dart';
+import 'package:plezy/media/media_sort.dart';
 import 'package:plezy/media/media_role.dart';
 import 'package:plezy/media/media_server_client.dart';
 import 'package:plezy/media/media_source_info.dart';
@@ -79,10 +81,41 @@ MediaItem _movie(
   );
 }
 
-MediaLibrary _library(String id, String title, MediaKind kind) {
+/// A Jellyfin Movies library: its A–Z bar is the local alphabet, so the
+/// library screen draws it without a Plex first-character request.
+final List<MediaLibrary> goldenBrowseLibraries = [
+  _library('lib_movies', 'Movies', MediaKind.movie, backend: MediaBackend.jellyfin),
+  ...goldenLibraries.skip(1),
+];
+
+/// The browse library's 128 fictional films, enough for the A–Z bar, sorted
+/// by title.
+final List<MediaItem> goldenBrowseMovies = () {
+  const first = ['Amber', 'Blue', 'Cinder', 'Distant', 'Ember', 'Hollow', 'Iron', 'Lantern'];
+  const second = ['Bay', 'Coast', 'Field', 'Harbor', 'Hours', 'Light', 'Ridge', 'Road'];
+  const third = ['', ' II'];
+  final titles = [
+    for (final a in first)
+      for (final b in second)
+        for (final c in third) '$a $b$c',
+  ]..sort();
+  return [
+    for (final (i, title) in titles.indexed)
+      _movie(
+        'b$i',
+        title,
+        1990 + (i * 7) % 35,
+        durationMinutes: 84 + (i * 13) % 70,
+        viewCount: i % 5 == 2 ? 1 : null,
+        viewOffsetMinutes: i % 9 == 4 ? 30 : null,
+      ),
+  ];
+}();
+
+MediaLibrary _library(String id, String title, MediaKind kind, {MediaBackend backend = MediaBackend.plex}) {
   return MediaLibrary(
     id: id,
-    backend: MediaBackend.plex,
+    backend: backend,
     title: title,
     kind: kind,
     serverId: ServerId(goldenServerId),
@@ -335,6 +368,27 @@ class GoldenMediaServerClient implements MediaServerClient {
     MediaKind? libraryKind,
     HubFetchDiagnostics? diagnostics,
   }) async => const [];
+
+  /// The browse library's films.
+  @override
+  Future<LibraryPage<MediaItem>> fetchLibraryPagedContent(
+    String libraryId, {
+    required LibraryQuery query,
+    MediaKind? libraryKind,
+    AbortController? abort,
+  }) async {
+    return fakeLibraryPage(goldenBrowseMovies, start: query.offset, size: query.limit);
+  }
+
+  @override
+  Future<LibraryFilterResult> fetchLibraryFiltersWithValues(String libraryId, {MediaKind? libraryKind}) async =>
+      LibraryFilterResult.empty;
+
+  @override
+  Future<List<MediaSort>> fetchSortOptions(String libraryId, {String? libraryType}) async => const [
+    MediaSort(key: 'titleSort', title: 'Title'),
+    MediaSort(key: 'addedAt', descKey: 'addedAt:desc', title: 'Date added'),
+  ];
 
   @override
   Future<List<MediaItem>> fetchChildren(String parentId) async => _children[parentId] ?? const [];

@@ -10,6 +10,8 @@ import 'package:plezy/providers/discover_provider.dart';
 import 'package:plezy/providers/hidden_libraries_provider.dart';
 import 'package:plezy/providers/libraries_provider.dart';
 import 'package:plezy/screens/discover_screen.dart';
+import 'package:plezy/screens/libraries/libraries_screen.dart';
+import 'package:plezy/services/storage_service.dart';
 import 'package:plezy/watch_together/watch_together.dart';
 import 'package:provider/provider.dart';
 
@@ -26,6 +28,8 @@ void main() {
   setUpAll(() => initializeDateFormatting('en'));
 
   goldenMatrix('nocturne_home', themes: [nocturneGoldenTheme], body: pumpNocturneHome);
+
+  goldenMatrix('nocturne_library', themes: [nocturneGoldenTheme], body: pumpNocturneLibrary);
 
   goldenMatrix(
     'nocturne_home_variants',
@@ -77,6 +81,25 @@ Future<void> pumpNocturneHome(WidgetTester tester, GoldenCase golden) async {
     settle: false,
   );
   for (var i = 0; i < 6; i++) {
+    await tester.pump(const Duration(milliseconds: 250));
+  }
+}
+
+/// Pumps the Movies library screen inside the navigation shell: the chips,
+/// the title count and the A–Z jump rail over the fixture grid.
+Future<void> pumpNocturneLibrary(WidgetTester tester, GoldenCase golden) async {
+  final multiServer = testMultiServer(clients: [GoldenMediaServerClient()]).provider;
+  final storage = await StorageService.getInstance();
+  await storage.saveLibraryTab(goldenBrowseLibraries.first.globalKey, LibraryTabType.browse.name);
+  await pumpGoldenShell(
+    tester,
+    golden,
+    multiServerProvider: multiServer,
+    libraries: goldenBrowseLibraries,
+    content: const LibrariesScreen(),
+    settle: false,
+  );
+  for (var i = 0; i < 8; i++) {
     await tester.pump(const Duration(milliseconds: 250));
   }
 }

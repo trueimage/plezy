@@ -32,6 +32,7 @@ import '../library_alpha_bar_strategy.dart';
 import '../library_alpha_scroll_metrics.dart';
 import '../../../widgets/anchored_option_menus.dart';
 import '../../../widgets/focusable_media_card.dart';
+import '../../../theme/plezy_layout.dart';
 import '../../../widgets/options_chips_bar.dart';
 import '../../../widgets/listenable_selector.dart';
 import '../../../widgets/loading_indicator_box.dart';
@@ -1765,7 +1766,10 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
               SliverPersistentHeader(
                 floating: true,
                 pinned: false,
-                delegate: OptionsChipsBarDelegate(builder: (_) => _buildChipsBar()),
+                delegate: OptionsChipsBarDelegate(
+                  builder: (_) => _buildChipsBar(),
+                  height: optionsChipsBarHeightOf(context),
+                ),
               ),
             ..._buildContentSlivers(),
           ],
@@ -1907,6 +1911,7 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
 
   /// Builds the chips bar widget
   Widget _buildChipsBar() {
+    final countFilters = PlezyLayout.isNocturne(context);
     return OptionsChipsBar(
       chips: [
         OptionsChipDescriptor(
@@ -1921,9 +1926,11 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
             anchorKey: _filtersChipKey,
             focusNode: _filtersChipFocusNode,
             icon: Symbols.filter_alt_rounded,
-            label: _selectedFilters.isEmpty
+            label: _selectedFilters.isEmpty || countFilters
                 ? t.libraries.filters
                 : t.libraries.filtersWithCount(count: _activeFilterFieldCount),
+            // Nocturne draws the count as a badge after the label.
+            count: _selectedFilters.isNotEmpty && countFilters ? _activeFilterFieldCount : null,
             onPressed: _showFiltersBottomSheet,
           ),
         if (_isSortChipVisible)
@@ -1939,6 +1946,8 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
       onNavigateUp: widget.onBack,
       onNavigateLeftEdge: _navigateToSidebar,
       onBack: widget.onBack,
+      title: widget.library.title,
+      itemCount: totalSize,
     );
   }
 
@@ -2017,9 +2026,6 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
   static const double _gridTopPadding = 6.0;
   static const double _gridTopPaddingPhone = 0.0;
 
-  /// Width of the alpha jump bar widget
-  static const double _alphaJumpBarWidth = 20.0;
-
   /// Room between the grid and the alpha jump bar for the focused card's scale
   /// and outside border, which otherwise paint under the bar (#2218).
   static const double _alphaJumpBarFocusGap = 8.0;
@@ -2030,7 +2036,7 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
   static double get _alphaJumpBarEdgeInset => PlatformDetector.isTV() ? 24.0 : 0.0;
 
   /// Right-edge lane the alpha jump bar occupies, edge inset included.
-  static double get _alphaJumpBarLaneWidth => _alphaJumpBarEdgeInset + _alphaJumpBarWidth;
+  double get _alphaJumpBarLaneWidth => _alphaJumpBarEdgeInset + AlphaJumpBar.widthOf(context);
 
   void _setListScrollMetrics({required int density, required bool usesWideAspectRatio, CardShape? shape}) {
     if (_listMetricsDensity != density ||

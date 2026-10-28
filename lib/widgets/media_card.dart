@@ -5,6 +5,7 @@ import '../media/ids.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:plezy/widgets/app_icon.dart';
+import 'package:plezy/widgets/artwork_badges.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import '../focus/card_focus_scope.dart';
@@ -651,6 +652,8 @@ class MediaCardState extends State<MediaCard> with ContextMenuTapMixin<MediaCard
     final overlays = <Widget>[
       if (item is MediaItem && _showsWatchedIndicator(item)) WatchedIndicator(item: item),
       if (badgeLabels.isNotEmpty) _CatalogBadges(labels: badgeLabels),
+      if (item is MediaItem && showsNextUpTag(context, item, inContinueWatching: widget.isInContinueWatching))
+        Positioned(top: 6, left: 6, child: ReasonTag(label: t.nocturne.nextUp)),
     ];
     return ExcludeSemantics(
       child: _CatalogFocusBorder(
