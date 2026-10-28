@@ -8,8 +8,8 @@ import 'type_scale.dart';
 /// Everything a theme is built from: the [palette], plus the style overrides
 /// a theme sets on top of the shared defaults.
 ///
-/// Equal specs build the identical [ThemeData] (see `monoThemeFromSpec`), so
-/// a spec rebuilt at runtime reuses the cached theme of an equal one.
+/// Equal specs on the same target platform reuse the cached theme; see
+/// `monoThemeFromSpec`.
 @immutable
 class PlezyThemeSpec {
   const PlezyThemeSpec(this.palette, {this.focus, this.surfaces, this.type});

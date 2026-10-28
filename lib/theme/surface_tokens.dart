@@ -175,11 +175,11 @@ class SurfaceTokens extends ThemeExtension<SurfaceTokens> {
   final double skeletonRadius;
   final double skeletonTextRadius;
 
-  /// Elevation-2 surface (chips, inputs, rows); null keeps `colorScheme`'s.
+  /// Reserved elevation-2 surface for chips, inputs and rows; not yet rendered.
   final Color? raisedSurface;
 
-  /// Elevation-3 surface (sheets, dialogs, menus); null keeps the Material
-  /// defaults, which the mono scheme maps to its surface colour.
+  /// Background override for Material bottom sheets, dialogs and popup menus;
+  /// null keeps their respective scheme-derived defaults in `monoThemeFromSpec`.
   final Color? overlaySurface;
 
   /// Bottom fade of the home hero into the page, on phones and desktops and
@@ -200,9 +200,10 @@ class SurfaceTokens extends ThemeExtension<SurfaceTokens> {
   /// Fade behind the media detail app bar.
   final ArtworkScrim detailTopScrim;
 
-  /// Fill and glyph colour of the watched check and unwatched count; null for
-  /// `MonoTokens.text` on `MonoTokens.bg`.
+  /// Fill colour of the watched check and unwatched count; null uses `MonoTokens.text`.
   final Color? badgeFill;
+
+  /// Glyph colour of the watched check and unwatched count; null uses `MonoTokens.bg`.
   final Color? badgeForeground;
   final List<BoxShadow> badgeShadows;
 

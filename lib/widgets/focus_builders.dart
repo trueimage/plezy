@@ -22,7 +22,7 @@ class FocusBuilders {
   /// - [onTap]: Callback for tap/click events
   /// - [padding]: Padding inside the chip
   /// - [backgroundColor]: Background color for the chip
-  /// - [borderRadius]: Border radius for the chip (defaults to 20)
+  /// - [borderRadius]: Border radius for the chip; null uses [SurfaceTokens.chipRadius]
   /// - [child]: The content to display inside the chip
   static Widget buildFocusableChip({
     required BuildContext context,
