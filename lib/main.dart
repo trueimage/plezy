@@ -219,14 +219,15 @@ void _bootstrapApp() {
 Future<StartupThemeResolution> _resolveStartupTheme() async {
   final settings = await SettingsService.getInstance();
   await TvDetectionService.getInstance(forceTv: settings.read(SettingsService.forceTvMode));
-  final palette = ThemeProvider.resolveStored(settings, unlocked: SupporterService.startupUnlocked(settings)).palette;
+  final spec = ThemeProvider.resolveStored(settings, unlocked: SupporterService.startupUnlocked(settings)).spec;
+  final palette = spec?.palette;
   ThemeProvider.applyWindowChromeBrightness(
     ThemeProvider.isDarkFor(palette, WidgetsBinding.instance.platformDispatcher.platformBrightness),
   );
   return (
     themeMode: ThemeProvider.materialThemeModeFor(palette),
-    lightTheme: ThemeProvider.lightThemeFor(palette),
-    darkTheme: ThemeProvider.darkThemeFor(palette),
+    lightTheme: ThemeProvider.lightThemeForSpec(spec),
+    darkTheme: ThemeProvider.darkThemeForSpec(spec),
   );
 }
 

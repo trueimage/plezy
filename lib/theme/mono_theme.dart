@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'gapped_track_shape.dart';
 import 'mono_tokens.dart';
+import 'plezy_theme_spec.dart';
 
 /// One of the six colours a [MonoPalette] holds. [id] is the key the custom
 /// theme persists the colour under.
@@ -219,15 +220,19 @@ class MonoPalette {
   int get hashCode => Object.hash(bg, surface, outline, text, textMuted, accent);
 }
 
-final Map<({MonoPalette palette, TargetPlatform platform}), ThemeData> _monoThemeCache = {};
+final Map<({PlezyThemeSpec spec, TargetPlatform platform}), ThemeData> _monoThemeCache = {};
 
-ThemeData monoTheme(MonoPalette palette) {
+/// The theme for [palette] with the shared default style.
+ThemeData monoTheme(MonoPalette palette) => monoThemeFromSpec(PlezyThemeSpec(palette));
+
+/// The theme [spec] describes, memoised per spec and platform.
+ThemeData monoThemeFromSpec(PlezyThemeSpec spec) {
   // ThemeData derives several defaults from defaultTargetPlatform.
-  final key = (palette: palette, platform: defaultTargetPlatform);
+  final key = (spec: spec, platform: defaultTargetPlatform);
   final cached = _monoThemeCache[key];
   if (cached != null) return cached;
 
-  final theme = _buildMonoTheme(palette, platform: key.platform);
+  final theme = _buildMonoTheme(spec, platform: key.platform);
   _monoThemeCache[key] = theme;
   return theme;
 }
@@ -235,9 +240,11 @@ ThemeData monoTheme(MonoPalette palette) {
 /// [monoTheme] without the cache, for a palette that changes every frame: the
 /// custom theme editor's live preview would otherwise keep every intermediate
 /// palette's theme alive.
-ThemeData monoThemeUncached(MonoPalette palette) => _buildMonoTheme(palette, platform: defaultTargetPlatform);
+ThemeData monoThemeUncached(MonoPalette palette) =>
+    _buildMonoTheme(PlezyThemeSpec(palette), platform: defaultTargetPlatform);
 
-ThemeData _buildMonoTheme(MonoPalette c, {required TargetPlatform platform}) {
+ThemeData _buildMonoTheme(PlezyThemeSpec spec, {required TargetPlatform platform}) {
+  final c = spec.palette;
   final brightness = c.brightness;
   final onAccent = c.onAccent;
   final clickableCursor = WidgetStateProperty.resolveWith<MouseCursor>(

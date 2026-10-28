@@ -10,11 +10,17 @@ import '../services/settings_binding_owner.dart';
 import '../services/settings_service.dart' as settings;
 import '../services/supporter/supporter_service.dart';
 import '../theme/mono_theme.dart';
+import '../theme/plezy_theme_spec.dart';
 import '../utils/app_logger.dart';
 
-/// What the app paints: the effective theme [mode] and its [palette], null for
+/// What the app paints: the effective theme [mode] and its [spec], null for
 /// System, which follows the platform between Light and Dark.
-typedef ThemeChoice = ({settings.ThemeMode mode, MonoPalette? palette});
+typedef ThemeChoice = ({settings.ThemeMode mode, PlezyThemeSpec? spec});
+
+extension ThemeChoicePalette on ThemeChoice {
+  /// The colours [spec] paints with; null for System.
+  MonoPalette? get palette => spec?.palette;
+}
 
 class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, WidgetsBindingObserver {
   final SupporterService _supporter;
@@ -119,7 +125,7 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
     final locked = stored.isSupporterPerk && !unlocked;
     final missingCustom = stored == settings.ThemeMode.custom && customPalette == null;
     final mode = locked || missingCustom ? settings.SettingsService.themeMode.resolvedDefault : stored;
-    return (mode: mode, palette: paletteFor(mode, customPalette: customPalette));
+    return (mode: mode, spec: specFor(mode, customPalette: customPalette));
   }
 
   /// [resolve] for the choice stored in [service].
@@ -128,6 +134,13 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
     service.read(settings.SettingsService.customThemePalette),
     unlocked: unlocked,
   );
+
+  /// The theme spec [mode] paints with: [paletteFor] with the shared default
+  /// style, null for System.
+  static PlezyThemeSpec? specFor(settings.ThemeMode mode, {MonoPalette? customPalette}) {
+    final palette = paletteFor(mode, customPalette: customPalette);
+    return palette == null ? null : PlezyThemeSpec(palette);
+  }
 
   /// The palette [mode] paints with: [customPalette] for Custom, null for
   /// System, which follows the platform between Light and Dark.
@@ -144,22 +157,32 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
     settings.ThemeMode.custom => customPalette,
   };
 
-  /// Light-slot theme for [palette]: the palette itself when it is light,
+  /// Light-slot theme for [palette] with the shared default style; see
+  /// [lightThemeForSpec].
+  static ThemeData lightThemeFor(MonoPalette? palette) => lightThemeForSpec(_defaultSpec(palette));
+
+  /// Dark-slot theme for [palette] with the shared default style; see
+  /// [darkThemeForSpec].
+  static ThemeData darkThemeFor(MonoPalette? palette) => darkThemeForSpec(_defaultSpec(palette));
+
+  static PlezyThemeSpec? _defaultSpec(MonoPalette? palette) => palette == null ? null : PlezyThemeSpec(palette);
+
+  /// Light-slot theme for [spec]: the spec itself when its palette is light,
   /// otherwise Light (the System theme's light half).
   ///
-  /// Static, like [darkThemeFor], so the pre-provider startup frame resolves
-  /// the same theme this provider will settle on (#1833).
-  static ThemeData lightThemeFor(MonoPalette? palette) =>
-      monoTheme(palette?.brightness == Brightness.light ? palette! : MonoPalette.light);
+  /// Static, like [darkThemeForSpec], so the pre-provider startup frame
+  /// resolves the same theme this provider will settle on (#1833).
+  static ThemeData lightThemeForSpec(PlezyThemeSpec? spec) =>
+      monoThemeFromSpec(spec?.palette.brightness == Brightness.light ? spec! : const PlezyThemeSpec(MonoPalette.light));
 
-  /// Dark-slot theme for [palette]: the palette itself when it is dark,
+  /// Dark-slot theme for [spec]: the spec itself when its palette is dark,
   /// otherwise Dark (the System theme's dark half).
   ///
   /// Static so the pre-provider startup frame can resolve the same theme this
   /// provider will settle on, instead of guessing from platform brightness
   /// and flashing when the two disagree (#1833).
-  static ThemeData darkThemeFor(MonoPalette? palette) =>
-      monoTheme(palette?.brightness == Brightness.dark ? palette! : MonoPalette.dark);
+  static ThemeData darkThemeForSpec(PlezyThemeSpec? spec) =>
+      monoThemeFromSpec(spec?.palette.brightness == Brightness.dark ? spec! : const PlezyThemeSpec(MonoPalette.dark));
 
   /// Material equivalent of [palette]: system for System (null), otherwise
   /// the palette's brightness.
@@ -169,8 +192,8 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
     Brightness.dark => ThemeMode.dark,
   };
 
-  ThemeData get lightTheme => lightThemeFor(_choice.palette);
-  ThemeData get darkTheme => darkThemeFor(_choice.palette);
+  ThemeData get lightTheme => lightThemeForSpec(_choice.spec);
+  ThemeData get darkTheme => darkThemeForSpec(_choice.spec);
 
   ThemeMode get materialThemeMode => materialThemeModeFor(_choice.palette);
 
