@@ -30,10 +30,13 @@ import 'package:plezy/profiles/profile_connection_registry.dart';
 import 'package:plezy/profiles/profile_registry.dart';
 import 'package:plezy/providers/companion_remote_provider.dart';
 import 'package:plezy/providers/discover_provider.dart';
+import 'package:plezy/providers/download_provider.dart';
 import 'package:plezy/providers/hidden_libraries_provider.dart';
 import 'package:plezy/providers/libraries_provider.dart';
 import 'package:plezy/providers/multi_server_provider.dart';
 import 'package:plezy/screens/discover_screen.dart';
+import 'package:plezy/screens/media_detail_screen.dart';
+import 'package:plezy/services/offline_watch_sync_service.dart';
 import 'package:plezy/screens/main_screen.dart';
 import 'package:plezy/services/data_aggregation_service.dart';
 import 'package:plezy/services/multi_server_manager.dart';
@@ -765,6 +768,59 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  for (final isTv in [false, true]) {
+    testWidgets('Nocturne episode spotlight Details opens details with Episode Action Play (TV: $isTv)', (tester) async {
+      final settings = await SettingsService.getInstance();
+      await settings.write(SettingsService.episodeAction, EpisodeAction.play);
+      final episode = testMediaItem(
+        id: 'episode-20',
+        backend: MediaBackend.plex,
+        kind: MediaKind.episode,
+        title: 'Episode 20',
+        parentId: 'season-2',
+        parentIndex: 2,
+        grandparentId: 'show-1',
+        grandparentTitle: 'The Show',
+        serverId: 'server_1',
+      );
+      final observer = _DetailsRouteObserver();
+      final downloads = _PlaybackProbeDownloads();
+      addTearDown(downloads.dispose);
+      await _pumpDiscoverShell(
+        tester,
+        isTv: isTv,
+        theme: monoThemeFromSpec(NocturneTheme.spec()),
+        client: _FakeMediaServerClient(hubs: const [], continueWatching: [episode]),
+        observer: observer,
+        downloads: downloads,
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text(t.nocturne.details), findsOneWidget);
+      await tester.tap(find.text(t.nocturne.details));
+      // Inspect the committed navigation destination before mounting its
+      // server-backed screen: this test owns the home button's routing.
+      expect(downloads.playbackLookups, isEmpty, reason: 'Details must never enter playback resolution');
+      expect(observer.routes, hasLength(2));
+      final route = observer.routes.last;
+      final context = tester.element(find.byType(DiscoverScreen));
+      final page = route is MaterialPageRoute
+          ? route.builder(context)
+          : (route as PageRouteBuilder).pageBuilder(
+              context,
+              const AlwaysStoppedAnimation(1.0),
+              const AlwaysStoppedAnimation(0.0),
+            );
+      expect(page, isA<MediaDetailScreen>());
+      final detail = page as MediaDetailScreen;
+      expect(detail.metadata.id, 'show-1');
+      expect(detail.initialSeasonId, 'season-2');
+      expect(detail.initialSeasonIndex, 2);
+      expect(detail.initialEpisodeId, episode.id);
+      await tester.pumpWidget(const SizedBox());
+    });
+  }
+
   testWidgets('the home clock is TV-only chrome', (tester) async {
     await _pumpDiscoverShell(tester, isTv: false);
     expect(find.text(t.discover.title), findsOneWidget);
@@ -1055,7 +1111,14 @@ Future<_GatedDiscover> _pumpGatedDiscover(WidgetTester tester, {bool underRootCo
 
 /// Mounts [DiscoverScreen] in the smallest graph both layout branches need, so
 /// one test can compare the TV and non-TV chrome without rebuilding it twice.
-Future<void> _pumpDiscoverShell(WidgetTester tester, {required bool isTv}) async {
+Future<void> _pumpDiscoverShell(
+  WidgetTester tester, {
+  required bool isTv,
+  ThemeData? theme,
+  _FakeMediaServerClient? client,
+  NavigatorObserver? observer,
+  DownloadProvider? downloads,
+}) async {
   TvDetectionService.debugSetAppleTVOverride(isTv);
   await SettingsService.getInstance();
   tester.view.devicePixelRatio = 1.0;
@@ -1065,7 +1128,7 @@ Future<void> _pumpDiscoverShell(WidgetTester tester, {required bool isTv}) async
     tester.view.resetPhysicalSize();
   });
 
-  final client = _FakeMediaServerClient(hubs: const []);
+  client ??= _FakeMediaServerClient(hubs: const []);
   final manager = MultiServerManager()..debugRegisterClientForTesting(client);
   final multiServerProvider = testMultiServerProvider(manager);
   final hiddenLibrariesProvider = HiddenLibrariesProvider();
@@ -1114,6 +1177,8 @@ Future<void> _pumpDiscoverShell(WidgetTester tester, {required bool isTv}) async
     TranslationProvider(
       child: MultiProvider(
         providers: [
+          if (downloads != null) ChangeNotifierProvider<DownloadProvider>.value(value: downloads),
+          ChangeNotifierProvider<OfflineWatchSyncService>(create: (_) => _FakeOfflineWatchSync()),
           ChangeNotifierProvider<MultiServerProvider>.value(value: multiServerProvider),
           ChangeNotifierProvider<HiddenLibrariesProvider>.value(value: hiddenLibrariesProvider),
           ChangeNotifierProvider<LibrariesProvider>.value(value: librariesProvider),
@@ -1124,7 +1189,8 @@ Future<void> _pumpDiscoverShell(WidgetTester tester, {required bool isTv}) async
         ],
         child: InputModeTracker(
           child: MaterialApp(
-            theme: monoTheme(MonoPalette.dark),
+            theme: theme ?? monoTheme(MonoPalette.dark),
+            navigatorObservers: [if (observer != null) observer],
             home: MainScreenFocusScope(
               focusSidebar: () {},
               sideNavigationWidth: SideNavigationRailState.expandedWidth,
@@ -1259,4 +1325,33 @@ class _FakeProfileConnectionRegistry extends ProfileConnectionRegistry {
 
   @override
   Stream<List<ProfileConnection>> watchAll() => Stream.value(const []);
+}
+
+class _DetailsRouteObserver extends NavigatorObserver {
+  final routes = <Route<dynamic>>[];
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) => routes.add(route);
+}
+
+class _PlaybackProbeDownloads extends ChangeNotifier implements DownloadProvider {
+  final playbackLookups = <String>[];
+
+  @override
+  bool isDownloaded(String globalKey) => false;
+
+  @override
+  Future<DownloadedMediaItem?> getCompletedDownload(String globalKey) {
+    playbackLookups.add(globalKey);
+    // Hold an accidental playback launch before it can create a native player.
+    return Completer<DownloadedMediaItem?>().future;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakeOfflineWatchSync extends ChangeNotifier implements OfflineWatchSyncService {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

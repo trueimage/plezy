@@ -245,7 +245,7 @@ void main() {
     WatchStateNotifier().notify(
       WatchStateEvent(
         itemId: 's1e1',
-        serverId: const ServerId('server'),
+        serverId: ServerId('server'),
         parentChain: const [],
         changeType: WatchStateChangeType.progressUpdate,
         viewOffset: 60000,
@@ -259,7 +259,7 @@ void main() {
     WatchStateNotifier().notify(
       WatchStateEvent(
         itemId: 's1e1',
-        serverId: const ServerId('server'),
+        serverId: ServerId('server'),
         parentChain: const [],
         changeType: WatchStateChangeType.watched,
         isNowWatched: true,

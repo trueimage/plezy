@@ -1161,7 +1161,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
         hideSpoilers: hideSpoilers,
         rows: browseHubs.isEmpty ? const SizedBox.shrink() : rail,
         onPlay: (item) => navigateToMediaItem(context, item, playDirectly: true),
-        onDetails: (item) => navigateToMediaItem(context, item),
+        onDetails: (item) => navigateToMediaItemDetails(context, item),
         onNavigateDown: () => _tvBrowseRailKey.currentState?.requestFocus(),
         onNavigateUp: _focusToolbar,
         overlays: _tvHomeOverlays(browseHubs, rail: null),
@@ -1228,7 +1228,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
               kicker: _continueWatchingHub.title,
               hideSpoilers: SettingsService.instance.read(SettingsService.hideSpoilers),
               onPlay: () => navigateToMediaItem(context, item, playDirectly: true),
-              onDetails: () => navigateToMediaItem(context, item),
+              onDetails: () => navigateToMediaItemDetails(context, item),
             );
           },
         ),
