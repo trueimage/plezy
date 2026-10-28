@@ -11,6 +11,8 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:plezy/database/app_database.dart';
 import 'package:plezy/focus/focus_theme.dart';
+import 'package:plezy/theme/mono_theme.dart';
+import 'package:plezy/theme/nocturne_theme.dart';
 import 'package:plezy/media/ids.dart';
 import 'package:plezy/media/library_filter_result.dart';
 import 'package:plezy/media/library_change_event.dart';
@@ -366,6 +368,39 @@ void main() {
     expect(cardRights, isNotEmpty);
     expect(cardRights, everyElement(lessThanOrEqualTo(size.width - trailingInset)));
   });
+
+  for (final mode in ViewMode.values) {
+    testWidgets('Nocturne A-Z jumps align the target row in $mode', (tester) async {
+      TvDetectionService.debugSetAppleTVOverride(true);
+      addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
+      await SettingsService.instance.write(SettingsService.viewMode, mode);
+      final harness = _PlexBrowseHarness();
+      addTearDown(harness.dispose);
+      await pumpLibraryTab(
+        tester,
+        provider: harness.provider,
+        size: const Size(1920, 1080),
+        tab: Theme(
+          data: monoThemeFromSpec(NocturneTheme.spec()),
+          child: LibraryBrowseTab(library: harness.library, canGroupByFolders: true, isActive: true),
+        ),
+      );
+      await _pumpUntil(tester, () => harness.pageRequestCount >= 1 && harness.firstCharacterRequestCount >= 1);
+      await pumpRequestFrames(tester);
+      final tab = find.byType(LibraryBrowseTab);
+      final viewportTop = tester.getRect(tab).top;
+      tester.widget<AlphaJumpBar>(find.byType(AlphaJumpBar)).onJump(48);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await pumpRequestFrames(tester);
+      final target = find.byWidgetPredicate(
+        (widget) =>
+            widget is FocusableMediaCard && widget.item is MediaItem && (widget.item as MediaItem).id == 'movie-48',
+      );
+      expect(target, findsOneWidget);
+      expect(tester.getRect(target).top, closeTo(viewportTop, 1));
+    });
+  }
 
   testWidgets('TV keeps the alpha bar off the screen edge and clear of a focused last-column card', (tester) async {
     TvDetectionService.debugSetAppleTVOverride(true);

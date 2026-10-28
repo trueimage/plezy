@@ -15,12 +15,7 @@ extension _NocturneMediaDetail on _MediaDetailScreenState {
   bool _usesNocturneEpisodeList(BuildContext context, List<MediaHub> hubs) =>
       PlezyLayout.isNocturne(context) && hubs.any(_isTvDetailEpisodeHub);
 
-  Widget _buildNocturneTvDetailForeground(
-    BuildContext context,
-    MediaItem metadata, {
-    required bool hideSpoilers,
-    required double scale,
-  }) {
+  Widget _buildNocturneTvDetailForeground(BuildContext context, MediaItem metadata, {required bool hideSpoilers}) {
     final m = NocturneMetrics.of(context);
     final tk = tokens(context);
     final focusedEpisode = _tvDetailFocusedEpisode.value;
@@ -66,11 +61,7 @@ extension _NocturneMediaDetail on _MediaDetailScreenState {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        NocturneLogoOrTitle(
-                          item: metadata,
-                          client: _getArtworkMediaClient(context),
-                          title: metadata.grandparentTitle ?? metadata.displayTitle,
-                        ),
+                        NocturneLogoOrTitle(item: metadata, client: _getArtworkMediaClient(context)),
                         SizedBox(height: 12 * m.scale),
                         // The focusable path to the full-information sheet
                         // (#2042): background-only focus, no layout change.

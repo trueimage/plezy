@@ -68,10 +68,10 @@ class NocturneMetrics {
   bool get isPhone => formFactor == NocturneFormFactor.phone;
 
   /// [size] for this form factor, scaled on TV.
-  double size(TypeSize size, {double fallback = 14}) => switch (formFactor) {
-    NocturneFormFactor.tv => (size.tvSize ?? fallback) * scale,
-    NocturneFormFactor.desktop => size.regular ?? fallback,
-    NocturneFormFactor.phone => size.phone ?? size.regular ?? fallback,
+  double size(TypeSize size) => switch (formFactor) {
+    NocturneFormFactor.tv => (size.tvSize ?? 14) * scale,
+    NocturneFormFactor.desktop => size.regular ?? 14,
+    NocturneFormFactor.phone => size.phone ?? size.regular ?? 14,
   };
 
   /// A length given for each form factor, the TV one at 1080p.
@@ -211,12 +211,12 @@ class NocturneBackdrop extends StatelessWidget {
 class _MissingArtBackdrop extends StatelessWidget {
   const _MissingArtBackdrop({required this.title});
 
-  final String? title;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
     final bg = Theme.of(context).scaffoldBackgroundColor;
-    final text = title ?? '';
+    final text = title;
     final hue = nocturneTitleHue(text);
     final tint = HSLColor.fromAHSL(1, hue, 0.38, 0.2).toColor();
     return LayoutBuilder(
@@ -285,31 +285,23 @@ class NocturneTitleBlock extends StatelessWidget {
     required this.client,
     this.kicker,
     this.showSummary = true,
-    this.summaryLines = 2,
     this.extraMeta = const [],
     this.hideSpoilers = false,
-    this.below,
   });
 
   final MediaItem item;
   final MediaServerClient? client;
   final String? kicker;
   final bool showSummary;
-  final int summaryLines;
 
   /// Facts appended to the metadata line (time left, episode counts).
   final List<String> extraMeta;
   final bool hideSpoilers;
 
-  /// Shown between the metadata line and the synopsis (the detail hero's
-  /// media-info chips).
-  final Widget? below;
-
   @override
   Widget build(BuildContext context) {
     final m = NocturneMetrics.of(context);
     final t = tokens(context);
-    final title = item.grandparentTitle ?? item.displayTitle;
     final episodeLine = nocturneEpisodeLine(item);
     final hideSummary = hideSpoilers && item.shouldHideSpoiler;
     final summary = hideSummary ? null : item.summary;
@@ -333,7 +325,7 @@ class NocturneTitleBlock extends StatelessWidget {
           ),
           SizedBox(height: m.pick(tv: 28, desktop: 18, phone: 10)),
         ],
-        NocturneLogoOrTitle(item: item, client: client, title: title),
+        NocturneLogoOrTitle(item: item, client: client),
         if (episodeLine != null) ...[
           SizedBox(height: gap),
           Text(
@@ -350,12 +342,11 @@ class NocturneTitleBlock extends StatelessWidget {
         ],
         SizedBox(height: gap),
         NocturneMetaLine(item: item, extra: extraMeta),
-        if (below case final below?) ...[SizedBox(height: gap * 1.5), below],
         if (showSummary && summary != null && summary.isNotEmpty) ...[
           SizedBox(height: gap * 1.5),
           Text(
             summary,
-            maxLines: summaryLines,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: t.text.withValues(alpha: 0.92),
@@ -390,11 +381,10 @@ String? nocturneTimeLeft(MediaItem item) {
 /// Manrope 800 at display size; the box keeps its size either way, so nothing
 /// moves when a logo arrives.
 class NocturneLogoOrTitle extends StatelessWidget {
-  const NocturneLogoOrTitle({super.key, required this.item, required this.client, required this.title});
+  const NocturneLogoOrTitle({super.key, required this.item, required this.client});
 
   final MediaItem item;
   final MediaServerClient? client;
-  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -404,7 +394,7 @@ class NocturneLogoOrTitle extends StatelessWidget {
     Widget typeset(BuildContext context) => Align(
       alignment: Alignment.bottomLeft,
       child: FittingTitleText(
-        title,
+        item.grandparentTitle ?? item.displayTitle,
         maxLines: 2,
         alignment: Alignment.bottomLeft,
         style: TextStyle(
@@ -498,34 +488,26 @@ class NocturneButton extends StatelessWidget {
   const NocturneButton({
     super.key,
     required this.onPressed,
-    this.icon,
-    this.label,
+    required this.icon,
+    required this.label,
     this.detail,
     this.style = NocturneButtonStyle.secondary,
     this.focusNode,
-    this.autofocus = false,
     this.onNavigateUp,
     this.onNavigateDown,
-    this.onNavigateLeft,
-    this.onBack,
-    this.tooltip,
   });
 
-  final VoidCallback? onPressed;
-  final IconData? icon;
-  final String? label;
+  final VoidCallback onPressed;
+  final IconData icon;
+  final String label;
 
   /// A second, lighter part after the label ("23 min left", "4K · HDR").
   final String? detail;
 
   final NocturneButtonStyle style;
   final FocusNode? focusNode;
-  final bool autofocus;
   final VoidCallback? onNavigateUp;
   final VoidCallback? onNavigateDown;
-  final VoidCallback? onNavigateLeft;
-  final VoidCallback? onBack;
-  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -533,21 +515,18 @@ class NocturneButton extends StatelessWidget {
     final height = m.buttonHeight;
     return FocusableWrapper(
       focusNode: focusNode,
-      autofocus: autofocus,
       onSelect: onPressed,
       onNavigateUp: onNavigateUp,
       onNavigateDown: onNavigateDown,
-      onNavigateLeft: onNavigateLeft,
-      onBack: onBack,
       borderRadius: height / 2,
-      semanticLabel: label ?? tooltip,
+      semanticLabel: label,
       useFocusGlow: true,
       autoScroll: false,
       child: Builder(
         builder: (context) {
           final focused = Focus.of(context).hasFocus && InputModeTracker.isKeyboardMode(context);
           return MouseRegion(
-            cursor: onPressed == null ? MouseCursor.defer : SystemMouseCursors.click,
+            cursor: SystemMouseCursors.click,
             child: GestureDetector(
               onTap: onPressed,
               child: NocturneButtonFace(style: style, icon: icon, label: label, detail: detail, focused: focused),
@@ -566,16 +545,16 @@ class NocturneButtonFace extends StatelessWidget {
   const NocturneButtonFace({
     super.key,
     required this.style,
-    this.icon,
-    this.label,
+    required this.icon,
+    required this.label,
     this.detail,
     this.focused = false,
     this.height,
   });
 
   final NocturneButtonStyle style;
-  final IconData? icon;
-  final String? label;
+  final IconData icon;
+  final String label;
   final String? detail;
   final bool focused;
 
@@ -601,8 +580,9 @@ class NocturneButtonFace extends StatelessWidget {
     final head = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (icon != null) ...[AppIcon(icon!, fill: 1, size: iconSize), SizedBox(width: gap)],
-        if (label != null) Text(label!, style: labelStyle),
+        AppIcon(icon, fill: 1, size: iconSize),
+        SizedBox(width: gap),
+        Text(label, style: labelStyle),
       ],
     );
     final detail = this.detail;

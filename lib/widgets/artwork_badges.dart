@@ -7,7 +7,7 @@ import '../theme/surface_tokens.dart';
 /// The accent dot an unwatched, unstarted movie carries top-right when the
 /// theme's [BadgeGrammar.unwatchedDot] is on.
 class UnwatchedDot extends StatelessWidget {
-  const UnwatchedDot({super.key, this.size = 10});
+  const UnwatchedDot({super.key, required this.size});
 
   final double size;
 
@@ -31,10 +31,10 @@ class UnwatchedDot extends StatelessWidget {
 /// Why a card is in its row ("Next up"), top-left on the artwork when the
 /// theme's [BadgeGrammar.reasonTag] is on.
 class ReasonTag extends StatelessWidget {
-  const ReasonTag({super.key, required this.label, this.fontSize = 11});
+  const ReasonTag({super.key, required this.label});
 
   final String label;
-  final double fontSize;
+  static const double fontSize = 11;
 
   @override
   Widget build(BuildContext context) {

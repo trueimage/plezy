@@ -185,6 +185,21 @@ class NocturneEpisodeListState extends State<NocturneEpisodeList> {
     }
   }
 
+  void _cancelPendingFocus() {
+    _pendingFocus = false;
+    _focusRequest++;
+  }
+
+  void _selectSeason(int index) {
+    _cancelPendingFocus();
+    widget.onSeasonSelected(widget.seasons[index], index);
+  }
+
+  void _activateEpisode(MediaHub season, MediaItem episode) {
+    _cancelPendingFocus();
+    widget.onEpisodeActivated(season, context.readFreshWatchState(episode));
+  }
+
   KeyEventResult _onRetryKey(KeyEvent event) {
     if (!event.isActionable) return KeyEventResult.ignored;
     if (event.logicalKey.isSelectKey) {
@@ -193,10 +208,12 @@ class NocturneEpisodeListState extends State<NocturneEpisodeList> {
       return KeyEventResult.handled;
     }
     if (event.logicalKey.isBackKey) {
+      _cancelPendingFocus();
       widget.onBack();
       return KeyEventResult.handled;
     }
     if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+      _cancelPendingFocus();
       final count = _season?.items.length ?? 0;
       if (count > 0) {
         unawaited(_focusEpisode(count - 1));
@@ -214,18 +231,16 @@ class NocturneEpisodeListState extends State<NocturneEpisodeList> {
     if (!event.isActionable) return KeyEventResult.ignored;
     final key = event.logicalKey;
     if (key.isSelectKey) {
-      widget.onSeasonSelected(widget.seasons[index], index);
+      _selectSeason(index);
       return KeyEventResult.handled;
     }
     if (key.isBackKey) {
-      _pendingFocus = false;
-      _focusRequest++;
+      _cancelPendingFocus();
       widget.onBack();
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.arrowUp) {
-      _pendingFocus = false;
-      _focusRequest++;
+      _cancelPendingFocus();
       widget.onNavigateUp();
       return KeyEventResult.handled;
     }
@@ -234,6 +249,7 @@ class NocturneEpisodeListState extends State<NocturneEpisodeList> {
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.arrowLeft || key == LogicalKeyboardKey.arrowRight) {
+      _cancelPendingFocus();
       final next = index + (key == LogicalKeyboardKey.arrowLeft ? -1 : 1);
       // Short menus may not wrap here: Left always undoes Right.
       if (next >= 0 && next < _chipNodes.length) _chipNodes[next].requestFocus();
@@ -248,12 +264,11 @@ class NocturneEpisodeListState extends State<NocturneEpisodeList> {
     if (season == null) return KeyEventResult.ignored;
     final key = event.logicalKey;
     if (key.isSelectKey) {
-      widget.onEpisodeActivated(season, context.readFreshWatchState(season.items[index]));
+      _activateEpisode(season, season.items[index]);
       return KeyEventResult.handled;
     }
     if (key.isBackKey) {
-      _pendingFocus = false;
-      _focusRequest++;
+      _cancelPendingFocus();
       widget.onBack();
       return KeyEventResult.handled;
     }
@@ -315,7 +330,7 @@ class NocturneEpisodeListState extends State<NocturneEpisodeList> {
                       newCount: widget.unwatchedCountOf?.call(i),
                       selected: i == widget.selectedSeason,
                       onKey: (event) => _onChipKey(i, event),
-                      onTap: () => widget.onSeasonSelected(widget.seasons[i], i),
+                      onTap: () => _selectSeason(i),
                     ),
                   ],
                 ],
@@ -356,11 +371,10 @@ class NocturneEpisodeListState extends State<NocturneEpisodeList> {
                   episode: items[index],
                   client: widget.clientFor(items[index]),
                   focusNode: _episodeNodes[index],
-                  autofocus: false,
                   hideSpoilers: widget.hideSpoilers,
                   onKey: (event) => _onEpisodeKey(index, event),
                   onFocusChange: (focused) => _onEpisodeFocus(index, focused),
-                  onTap: () => widget.onEpisodeActivated(season!, context.readFreshWatchState(items[index])),
+                  onTap: () => _activateEpisode(season!, items[index]),
                 ),
               );
             },
@@ -464,7 +478,6 @@ class _EpisodeRow extends StatelessWidget {
     required this.episode,
     required this.client,
     required this.focusNode,
-    required this.autofocus,
     required this.hideSpoilers,
     required this.onKey,
     required this.onFocusChange,
@@ -474,7 +487,6 @@ class _EpisodeRow extends StatelessWidget {
   final MediaItem episode;
   final MediaServerClient? client;
   final FocusNode focusNode;
-  final bool autofocus;
   final bool hideSpoilers;
   final KeyEventResult Function(KeyEvent event) onKey;
   final ValueChanged<bool> onFocusChange;
@@ -502,7 +514,6 @@ class _EpisodeRow extends StatelessWidget {
         : null;
     return Focus(
       focusNode: focusNode,
-      autofocus: autofocus,
       onFocusChange: (focused) {
         onFocusChange(focused);
         if (focused && InputModeTracker.currentMode == InputMode.keyboard) {

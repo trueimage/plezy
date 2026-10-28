@@ -3817,12 +3817,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
               ? ListenableBuilder(
                   listenable: _tvDetailForegroundListenable,
                   builder: (context, _) => PlezyLayout.isNocturne(context)
-                      ? _buildNocturneTvDetailForeground(
-                          context,
-                          metadata,
-                          hideSpoilers: hideSpoilers,
-                          scale: detailScale,
-                        )
+                      ? _buildNocturneTvDetailForeground(context, metadata, hideSpoilers: hideSpoilers)
                       : _buildTvDetailForeground(context, metadata, hideSpoilers: hideSpoilers, scale: detailScale),
                 )
               : const SizedBox.shrink(),

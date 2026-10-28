@@ -526,9 +526,6 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
     }
   }
 
-  /// Height of the chips bar — see [optionsChipsBarHeight].
-  static const double _chipsBarHeight = optionsChipsBarHeight;
-
   /// Focus the chips bar (for navigating from tab bar to content).
   /// Called by libraries screen when pressing DOWN on tab bar.
   void focusChipsBar() {
@@ -1570,7 +1567,8 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
     );
   }
 
-  double get _contentStartScrollOffset => (_usesMobileBrowseOptions ? 0.0 : _chipsBarHeight) + _effectiveTopPadding;
+  double get _contentStartScrollOffset =>
+      (_usesMobileBrowseOptions ? 0.0 : optionsChipsBarHeightOf(context)) + _effectiveTopPadding;
 
   /// Handle a tap on the letter at [targetIndex] in the alpha bar. The
   /// active [LibraryAlphaBarStrategy] owns the per-backend behaviour and

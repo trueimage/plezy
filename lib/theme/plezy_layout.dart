@@ -23,17 +23,7 @@ enum LayoutVariantSetting { auto }
 /// from the theme's tokens.
 @immutable
 class PlezyLayout extends ThemeExtension<PlezyLayout> {
-  const PlezyLayout({
-    this.variant = LayoutVariant.classic,
-    this.railWidth = 88,
-    this.railOpenWidth = 380,
-    this.safeX = 80,
-    this.safeY = 48,
-    this.backdropHeight = 0.62,
-    this.rowFocusLine = 592,
-    this.logoBox = const Size(520, 128),
-    this.jumpRailWidth = 44,
-  });
+  const PlezyLayout({this.variant = LayoutVariant.classic});
 
   /// What every built-in theme draws.
   static const classic = PlezyLayout();
@@ -57,74 +47,34 @@ class PlezyLayout extends ThemeExtension<PlezyLayout> {
 
   /// Width of the collapsed TV icon rail, and of the rail held open over the
   /// content.
-  final double railWidth;
-  final double railOpenWidth;
+  final double railWidth = 88;
+  final double railOpenWidth = 380;
 
   /// TV safe margins for text and focusables; artwork bleeds past them.
-  final double safeX;
-  final double safeY;
+  final double safeX = 80;
+  final double safeY = 48;
 
   /// Share of the screen height the backdrop takes.
-  final double backdropHeight;
+  final double backdropHeight = 0.62;
 
   /// Top of the first row under the home spotlight at 1080p.
-  final double rowFocusLine;
+  final double rowFocusLine = 592;
 
   /// The box a clear logo is fitted into, reserved whether or not it loads.
-  final Size logoBox;
+  final Size logoBox = const Size(520, 128);
 
-  final double jumpRailWidth;
+  final double jumpRailWidth = 44;
 
   @override
-  PlezyLayout copyWith({
-    LayoutVariant? variant,
-    double? railWidth,
-    double? railOpenWidth,
-    double? safeX,
-    double? safeY,
-    double? backdropHeight,
-    double? rowFocusLine,
-    Size? logoBox,
-    double? jumpRailWidth,
-  }) => PlezyLayout(
-    variant: variant ?? this.variant,
-    railWidth: railWidth ?? this.railWidth,
-    railOpenWidth: railOpenWidth ?? this.railOpenWidth,
-    safeX: safeX ?? this.safeX,
-    safeY: safeY ?? this.safeY,
-    backdropHeight: backdropHeight ?? this.backdropHeight,
-    rowFocusLine: rowFocusLine ?? this.rowFocusLine,
-    logoBox: logoBox ?? this.logoBox,
-    jumpRailWidth: jumpRailWidth ?? this.jumpRailWidth,
-  );
+  PlezyLayout copyWith() => this;
 
   /// A layout has no in-between: it switches at the midpoint.
   @override
   PlezyLayout lerp(covariant PlezyLayout? other, double t) => other == null || t < 0.5 ? this : other;
 
   @override
-  bool operator ==(Object other) =>
-      other is PlezyLayout &&
-      other.variant == variant &&
-      other.railWidth == railWidth &&
-      other.railOpenWidth == railOpenWidth &&
-      other.safeX == safeX &&
-      other.safeY == safeY &&
-      other.backdropHeight == backdropHeight &&
-      other.rowFocusLine == rowFocusLine &&
-      other.logoBox == logoBox &&
-      other.jumpRailWidth == jumpRailWidth;
+  bool operator ==(Object other) => other is PlezyLayout && other.variant == variant;
 
   @override
-  int get hashCode => Object.hash(
-    variant,
-    railWidth,
-    railOpenWidth,
-    safeX,
-    safeY,
-    backdropHeight,
-    rowFocusLine,
-    logoBox,
-    jumpRailWidth,
-  );
+  int get hashCode => variant.hashCode;
 }

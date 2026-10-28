@@ -162,6 +162,47 @@ void main() {
     }
   }
 
+  testWidgets('sideways chip navigation cancels pending episode entry', (tester) async {
+    await pumpList(tester, seasons: [_season(1, 0), _season(2, 1)], trailing: TvRailTrailing.loading);
+    listKey.currentState!.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pump();
+    expect(focusedLabel(), 'nocturne_season_1');
+    await pumpList(tester, seasons: [_season(1, 3), _season(2, 1)]);
+    await tester.pumpAndSettle();
+    expect(focusedLabel(), 'nocturne_season_1');
+    expect(log.where((entry) => entry.startsWith('focus ')), isEmpty);
+  });
+
+  testWidgets('pointer season selection cancels pending episode entry', (tester) async {
+    await pumpList(tester, seasons: [_season(1, 0), _season(2, 1)], trailing: TvRailTrailing.loading);
+    listKey.currentState!.requestFocus();
+    await tester.pump();
+    await tester.tap(find.text('Season 2', findRichText: true));
+    await tester.pump();
+    expect(log, contains('season 1'));
+    await pumpList(tester, seasons: [_season(1, 3), _season(2, 1)]);
+    await tester.pumpAndSettle();
+    expect(log.where((entry) => entry.startsWith('focus ')), isEmpty);
+  });
+
+  for (final exit in [LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.escape]) {
+    testWidgets('leaving retry with $exit cancels pending recovery', (tester) async {
+      await pumpList(tester, seasons: [_season(1, 0), _season(2, 1)], trailing: TvRailTrailing.error);
+      listKey.currentState!.requestFocus();
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(log, contains('retry season_1'));
+      await tester.sendKeyEvent(exit);
+      await tester.pump();
+      await pumpList(tester, seasons: [_season(1, 3), _season(2, 1)]);
+      await tester.pumpAndSettle();
+      expect(log.where((entry) => entry.startsWith('focus ')), isEmpty);
+    });
+  }
+
   testWidgets('reveals season chips sideways and when returning from rows', (tester) async {
     await pumpList(tester, seasons: [for (var season = 1; season <= 30; season++) _season(season, 1)]);
     listKey.currentState!.requestFocus();
