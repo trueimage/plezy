@@ -69,6 +69,7 @@ import '../providers/companion_remote_provider.dart';
 import '../widgets/companion_remote/remote_session_dialog.dart';
 import 'companion_remote/mobile_remote_screen.dart';
 import '../theme/surface_tokens.dart';
+import '../theme/type_scale.dart';
 
 class DiscoverScreen extends StatefulWidget {
   const DiscoverScreen({super.key});
@@ -863,7 +864,11 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                               ),
                               child: Text(
                                 '${watchTogether.participantCount}',
-                                style: TextStyle(color: colorScheme.onPrimary, fontSize: 10, fontWeight: .bold),
+                                style: TextStyle(
+                                  color: colorScheme.onPrimary,
+                                  fontSize: TypeScale.of(context).countBadge.sizeIn(context),
+                                  fontWeight: .bold,
+                                ),
                               ),
                             ),
                           ),
@@ -1418,7 +1423,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     final heroTitleStyle = theme.textTheme.displaySmall?.copyWith(
       color: colorScheme.onSurface,
       fontWeight: .bold,
-      fontSize: isTv ? 52 : null,
+      fontSize: TypeScale.of(context).heroTitle.resolve(context, isTv: isTv),
       shadows: [Shadow(color: colorScheme.surface.withValues(alpha: 0.8), blurRadius: 8)],
     );
 
@@ -1527,7 +1532,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                                 ].join(' • '),
                                 style: TextStyle(
                                   color: colorScheme.onSurface,
-                                  fontSize: isTv ? 18 : 14,
+                                  fontSize: TypeScale.of(context).heroMeta.resolve(context, isTv: isTv),
                                   fontWeight: .w600,
                                 ),
                                 textAlign: alignLeft ? TextAlign.left : TextAlign.center,
@@ -1545,7 +1550,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                                 text: TextSpan(
                                   style: TextStyle(
                                     color: colorScheme.onSurface.withValues(alpha: 0.7),
-                                    fontSize: isTv ? 18 : 14,
+                                    fontSize: TypeScale.of(context).heroMeta.resolve(context, isTv: isTv),
                                     height: isTv ? 1.45 : 1.4,
                                   ),
                                   children: [
@@ -1574,7 +1579,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                                 textAlign: alignLeft ? TextAlign.left : TextAlign.center,
                                 style: TextStyle(
                                   color: colorScheme.onSurface.withValues(alpha: 0.7),
-                                  fontSize: isTv ? 18 : 14,
+                                  fontSize: TypeScale.of(context).heroMeta.resolve(context, isTv: isTv),
                                   height: isTv ? 1.45 : 1.4,
                                 ),
                               ),
@@ -1662,7 +1667,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                         t.discover.minutesLeft(minutes: minutesLeft),
                         style: TextStyle(
                           color: foregroundColor,
-                          fontSize: isTv ? 18 : 14,
+                          fontSize: TypeScale.of(context).heroMeta.resolve(context, isTv: isTv),
                           fontWeight: isTv ? FontWeight.w700 : FontWeight.w600,
                         ),
                       ),
@@ -1671,7 +1676,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                         t.common.play,
                         style: TextStyle(
                           color: foregroundColor,
-                          fontSize: isTv ? 18 : 14,
+                          fontSize: TypeScale.of(context).heroMeta.resolve(context, isTv: isTv),
                           fontWeight: isTv ? FontWeight.w700 : FontWeight.w600,
                         ),
                       ),

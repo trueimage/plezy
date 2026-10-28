@@ -7,6 +7,7 @@ import 'gapped_track_shape.dart';
 import 'mono_tokens.dart';
 import 'plezy_theme_spec.dart';
 import 'surface_tokens.dart';
+import 'type_scale.dart';
 
 /// One of the six colours a [MonoPalette] holds. [id] is the key the custom
 /// theme persists the colour under.
@@ -302,11 +303,13 @@ ThemeData _buildMonoTheme(PlezyThemeSpec spec, {required TargetPlatform platform
     inversePrimary: c.bg,
   );
   final surfaces = spec.surfaces ?? SurfaceTokens.fallback;
+  final type = spec.type ?? TypeScale.fallback;
 
   final base = ThemeData(
     platform: platform,
     useMaterial3: true,
     brightness: brightness,
+    fontFamily: type.fontFamily,
     // Linux resolves UI text through fontconfig, which on a minimal desktop
     // may have no CJK font at all; the bundled subtitle fonts (pubspec
     // `fonts:`) cover it. Other platforms keep their native CJK fonts.
@@ -441,6 +444,7 @@ ThemeData _buildMonoTheme(PlezyThemeSpec spec, {required TargetPlatform platform
       ),
       spec.focus ?? FocusTokens.fallback,
       surfaces,
+      type,
     ],
   );
 }

@@ -31,6 +31,7 @@ import '../utils/scroll_utils.dart';
 import 'horizontal_scroll_with_arrows.dart';
 import 'tv_browse_rail.dart';
 import '../i18n/strings.g.dart';
+import '../theme/type_scale.dart';
 
 enum HubCardSizing {
   /// Larger cards optimized for top-level TV shelves.
@@ -495,9 +496,10 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
     final isKeyboardMode = InputModeTracker.isKeyboardMode(context);
     final isTv = PlatformDetector.isTV();
     final leadingPadding = _leadingPaddingFor(isTv);
-    final titleStyle = Theme.of(
-      context,
-    ).textTheme.titleLarge?.copyWith(fontSize: isTv ? 26 : null, fontWeight: isTv ? FontWeight.w700 : null);
+    final titleStyle = Theme.of(context).textTheme.titleLarge?.copyWith(
+      fontSize: TypeScale.of(context).shelfHeader.resolve(context, isTv: isTv),
+      fontWeight: isTv ? FontWeight.w700 : null,
+    );
 
     return Padding(
       padding: .only(
@@ -538,7 +540,7 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
                           maxLines: 1,
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.62),
-                            fontSize: isTv ? 17 : null,
+                            fontSize: TypeScale.of(context).shelfCount.resolve(context, isTv: isTv),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -716,7 +718,7 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
                                             t.common.viewAll,
                                             style: Theme.of(context).textTheme.labelMedium?.copyWith(
                                               color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                                              fontSize: isTv ? 16 : null,
+                                              fontSize: TypeScale.of(context).shelfAction.resolve(context, isTv: isTv),
                                             ),
                                           ),
                                         ],

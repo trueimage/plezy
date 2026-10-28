@@ -39,6 +39,7 @@ import 'optimized_media_image.dart';
 import 'rasterized_gradient.dart';
 import 'settings_builder.dart';
 import 'sliver_child_memo.dart';
+import '../theme/type_scale.dart';
 
 const _inactiveArtworkDimAlpha = 0.3;
 
@@ -1541,9 +1542,12 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
     final iconColor = isActive ? colorScheme.onSurface : colorScheme.onSurface.withValues(alpha: 0.42);
     final showServerName = widget.showServerName && hub.serverName != null;
     final serverColor = colorScheme.primary.withValues(alpha: isActive ? 0.7 : 0.4);
-    final serverStyle = Theme.of(
-      context,
-    ).textTheme.titleMedium?.copyWith(color: serverColor, fontSize: 15 * scale, height: 1, fontWeight: FontWeight.w700);
+    final serverStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
+      color: serverColor,
+      fontSize: TypeScale.of(context).railServer.tvSize! * scale,
+      height: 1,
+      fontWeight: FontWeight.w700,
+    );
 
     return SizedBox(
       height: TvBrowseRailLayout.hubStripHeightForScale(scale),
@@ -1564,7 +1568,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
                         overflow: .ellipsis,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: titleColor,
-                          fontSize: 18 * scale,
+                          fontSize: TypeScale.of(context).railHeader.tvSize! * scale,
                           height: 1,
                           fontWeight: isActive ? FontWeight.w800 : FontWeight.w700,
                         ),
@@ -1964,7 +1968,12 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
                         item.displayTitle,
                         maxLines: 1,
                         overflow: .ellipsis,
-                        style: TextStyle(color: Colors.white, fontSize: 13 * scale, height: 1.1, fontWeight: .w800),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: TypeScale.of(context).railCardTitle.tvSize! * scale,
+                          height: 1.1,
+                          fontWeight: .w800,
+                        ),
                       ),
                       if (characterName != null && characterName.isNotEmpty) ...[
                         SizedBox(height: 2 * scale),
@@ -1974,7 +1983,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
                           overflow: .ellipsis,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.82),
-                            fontSize: 11 * scale,
+                            fontSize: TypeScale.of(context).railCardCaption.tvSize! * scale,
                             height: 1.1,
                             fontWeight: .w600,
                           ),
@@ -2021,7 +2030,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
               overflow: .ellipsis,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: tokens(context).text,
-                fontSize: 13 * scale,
+                fontSize: TypeScale.of(context).railCardTitle.tvSize! * scale,
                 height: 1.1,
                 fontWeight: .w700,
               ),
@@ -2034,7 +2043,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
                 overflow: .ellipsis,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: tokens(context).textMuted,
-                  fontSize: 11 * scale,
+                  fontSize: TypeScale.of(context).railCardCaption.tvSize! * scale,
                   height: 1.1,
                 ),
               ),
@@ -2203,7 +2212,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
                         overflow: .ellipsis,
                         style: TextStyle(
                           color: foreground,
-                          fontSize: (13 * scale).clamp(12, 16).toDouble(),
+                          fontSize: (TypeScale.of(context).railAction.tvSize! * scale).clamp(12, 16).toDouble(),
                           fontWeight: .w800,
                           letterSpacing: 0.1,
                         ),

@@ -41,6 +41,7 @@ import 'media_card_list_layout.dart';
 import 'backend_badge.dart';
 import 'optimized_media_image.dart';
 import '../theme/surface_tokens.dart';
+import '../theme/type_scale.dart';
 
 const _failedPosterUrlCacheLimit = 512;
 final _failedPosterUrls = <String>{};
@@ -278,7 +279,8 @@ class MediaCard extends StatefulWidget {
   /// Inset between a captioned grid card's cell and its artwork.
   static const EdgeInsets gridCardPadding = EdgeInsets.fromLTRB(3, 3, 3, 1);
 
-  static const TextStyle _gridTitleStyle = TextStyle(fontWeight: .w600, fontSize: 13, height: 1.1);
+  static TextStyle _gridTitleStyle(BuildContext context) =>
+      TextStyle(fontWeight: .w600, fontSize: TypeScale.of(context).cardTitle.sizeIn(context), height: 1.1);
 
   /// Height a captioned grid card spends outside its artwork: the vertical
   /// [gridCardPadding], the poster→title gap, and one title plus one caption
@@ -308,7 +310,7 @@ class MediaCard extends StatefulWidget {
 
     return gridCardPadding.vertical +
         context.settingsRead(SettingsService.gridSpacing).posterTitleGap +
-        lineHeight(_gridTitleStyle) +
+        lineHeight(_gridTitleStyle(context)) +
         lineHeight(_MediaCardHelpers._captionMetricsStyle(context));
   }
 
@@ -709,7 +711,7 @@ class MediaCardState extends State<MediaCard> with ContextMenuTapMixin<MediaCard
               if (widget.onTap == null && item is MediaItem && !_impliesShowTitle(item) && _hasClickableTitle(item))
                 _ClickableText(
                   text: item.displayTitle,
-                  style: MediaCard._gridTitleStyle,
+                  style: MediaCard._gridTitleStyle(context),
                   onTap: () => _navigateToFocusedDetail(context, item, isOffline: widget.isOffline),
                 )
               else
@@ -722,7 +724,7 @@ class MediaCardState extends State<MediaCard> with ContextMenuTapMixin<MediaCard
                     },
                     maxLines: 1,
                     overflow: .ellipsis,
-                    style: MediaCard._gridTitleStyle,
+                    style: MediaCard._gridTitleStyle(context),
                   ),
                 ),
               if (item is MediaPlaylist)
@@ -794,16 +796,18 @@ class _MediaCardList extends StatelessWidget {
 
   double _posterHeight() => MediaCardListLayout.posterHeight(density: density, shape: _cardShape());
 
-  double get _titleFontSize => 13 + LibraryDensity.factor(density) * 3; // 13–16
+  /// [size] grown by up to 3 px with the density.
+  double _densitySize(BuildContext context, TypeSize size) =>
+      size.sizeIn(context)! + LibraryDensity.factor(density) * 3;
 
-  double get _metadataFontSize => 10 + LibraryDensity.factor(density) * 3; // 10–13
+  double _titleFontSize(BuildContext context) => _densitySize(context, TypeScale.of(context).listTitle); // 13–16
 
-  double get _subtitleFontSize => 11 + LibraryDensity.factor(density) * 3; // 11–14
+  double _metadataFontSize(BuildContext context) => _densitySize(context, TypeScale.of(context).listMeta); // 10–13
 
-  double get _summaryFontSize {
-    // Summary uses the same sizing as metadata text
-    return _metadataFontSize;
-  }
+  double _subtitleFontSize(BuildContext context) => _densitySize(context, TypeScale.of(context).listSubtitle); // 11–14
+
+  // Summary uses the same sizing as metadata text
+  double _summaryFontSize(BuildContext context) => _metadataFontSize(context);
 
   int get _summaryMaxLines => density <= 2 ? 2 : density; // 2, 2, 3, 4, 5
 
@@ -874,7 +878,7 @@ class _MediaCardList extends StatelessWidget {
 
   TextStyle? _subtitleStyle(BuildContext context) => Theme.of(context).textTheme.bodySmall?.copyWith(
     color: tokens(context).textMuted.withValues(alpha: 0.85),
-    fontSize: _subtitleFontSize,
+    fontSize: _subtitleFontSize(context),
   );
 
   @override
@@ -935,7 +939,7 @@ class _MediaCardList extends StatelessWidget {
                     if (enableDetailLinks && item is MediaItem && _hasClickableTitle(item as MediaItem))
                       _ClickableText(
                         text: (item as MediaItem).displayTitle,
-                        style: TextStyle(fontWeight: .w600, fontSize: _titleFontSize, height: 1.2),
+                        style: TextStyle(fontWeight: .w600, fontSize: _titleFontSize(context), height: 1.2),
                         onTap: () => _navigateToFocusedDetail(context, item as MediaItem, isOffline: isOffline),
                       )
                     else
@@ -944,7 +948,7 @@ class _MediaCardList extends StatelessWidget {
                           _displayTitle(),
                           maxLines: 2,
                           overflow: .ellipsis,
-                          style: TextStyle(fontWeight: .w600, fontSize: _titleFontSize, height: 1.2),
+                          style: TextStyle(fontWeight: .w600, fontSize: _titleFontSize(context), height: 1.2),
                         ),
                       ),
                     const SizedBox(height: 4),
@@ -956,7 +960,7 @@ class _MediaCardList extends StatelessWidget {
                           overflow: .ellipsis,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: tokens(context).textMuted.withValues(alpha: 0.9),
-                            fontSize: _metadataFontSize,
+                            fontSize: _metadataFontSize(context),
                             fontWeight: .w500,
                           ),
                         ),
@@ -997,7 +1001,7 @@ class _MediaCardList extends StatelessWidget {
                           overflow: .ellipsis,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: tokens(context).textMuted.withValues(alpha: 0.7),
-                            fontSize: _summaryFontSize,
+                            fontSize: _summaryFontSize(context),
                             height: 1.3,
                           ),
                         ),
@@ -1017,10 +1021,10 @@ class _MediaCardList extends StatelessWidget {
                             // Transform leaves layout (and the episode
                             // summary-line trade) untouched.
                             Transform.translate(
-                              offset: Offset(0, _metadataFontSize * 0.115),
+                              offset: Offset(0, _metadataFontSize(context) * 0.115),
                               child: BackendBadge(
                                 backend: (item as MediaItem).backend,
-                                size: _metadataFontSize + 2,
+                                size: _metadataFontSize(context) + 2,
                                 color: tokens(context).textMuted.withValues(alpha: 0.6),
                               ),
                             ),
@@ -1032,7 +1036,7 @@ class _MediaCardList extends StatelessWidget {
                                 overflow: .ellipsis,
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                   color: tokens(context).textMuted.withValues(alpha: 0.6),
-                                  fontSize: _metadataFontSize,
+                                  fontSize: _metadataFontSize(context),
                                   // Matches the summary line it replaces on
                                   // wide rows, keeping the trade height-neutral.
                                   height: 1.3,
@@ -1209,8 +1213,9 @@ Widget _buildPosterImage(
 class _MediaCardHelpers {
   /// The caption's metrics without its color, so grid geometry can measure it
   /// without depending on the theme's color tokens.
-  static TextStyle? _captionMetricsStyle(BuildContext context) =>
-      Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11, height: 1.1);
+  static TextStyle? _captionMetricsStyle(BuildContext context) => Theme.of(
+    context,
+  ).textTheme.bodySmall?.copyWith(fontSize: TypeScale.of(context).cardCaption.sizeIn(context), height: 1.1);
 
   static TextStyle? _captionStyle(BuildContext context) =>
       _captionMetricsStyle(context)?.copyWith(color: tokens(context).textMuted);
@@ -1466,7 +1471,12 @@ class _CatalogBadges extends StatelessWidget {
                   labels[index],
                   maxLines: 1,
                   overflow: .ellipsis,
-                  style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: .w700, height: 1),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: TypeScale.of(context).labelBadge.sizeIn(context),
+                    fontWeight: .w700,
+                    height: 1,
+                  ),
                 ),
               ),
             ),
