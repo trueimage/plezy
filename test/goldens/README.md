@@ -100,7 +100,7 @@ After updating, look at every changed image (`git status test/goldens/goldens`) 
 - **No artwork.** The fixtures in `golden_fixtures.dart` have no image paths, so cards and heroes show their
   placeholders instead of depending on image decoding.
 - **Wall-clock time.** The clock and the player's "ends at" estimate read the time through `wallClockNow()`
-  (`lib/utils/wall_clock.dart`), which the harness pins to 07:19 on 28 October 2026 in 24-hour format. The text is
+  (`lib/utils/wall_clock.dart`), which the harness pins to 07:19 on 28 October 2026 in 12-hour format. The text is
   still painted over in magenta (`0xFFFF00FF`) in the captured image. Pinning the clock keeps the mask itself
   steady: Roboto and Manrope draw digits at different widths, so masking a live clock moved the mask's edge with
   the time of day.

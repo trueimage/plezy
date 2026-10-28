@@ -803,11 +803,11 @@ class _MediaCardList extends StatelessWidget {
   double _densitySize(BuildContext context, TypeSize size) =>
       size.sizeIn(context)! + LibraryDensity.factor(density) * 3;
 
-  double _titleFontSize(BuildContext context) => _densitySize(context, TypeScale.of(context).listTitle); // 13–16
+  double _titleFontSize(BuildContext context) => _densitySize(context, TypeScale.of(context).listTitle);
 
-  double _metadataFontSize(BuildContext context) => _densitySize(context, TypeScale.of(context).listMeta); // 10–13
+  double _metadataFontSize(BuildContext context) => _densitySize(context, TypeScale.of(context).listMeta);
 
-  double _subtitleFontSize(BuildContext context) => _densitySize(context, TypeScale.of(context).listSubtitle); // 11–14
+  double _subtitleFontSize(BuildContext context) => _densitySize(context, TypeScale.of(context).listSubtitle);
 
   // Summary uses the same sizing as metadata text
   double _summaryFontSize(BuildContext context) => _metadataFontSize(context);
