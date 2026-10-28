@@ -2572,6 +2572,9 @@
   },
   "nocturne": {
     "details": "Details",
-    "nextUp": "Next up"
+    "nextUp": "Next up",
+    "watched": "Watched",
+    "versions": "${count} versions",
+    "directedBy": "Directed by ${name}"
   }
 }

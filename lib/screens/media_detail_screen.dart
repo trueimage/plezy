@@ -45,6 +45,9 @@ import '../widgets/media_rating_badge.dart';
 import '../widgets/fitted_metadata_line.dart';
 import '../i18n/strings.g.dart';
 import '../theme/mono_tokens.dart';
+import '../theme/plezy_layout.dart';
+import '../widgets/nocturne/nocturne_episode_list.dart';
+import '../widgets/nocturne/nocturne_spotlight.dart';
 import '../widgets/cycling_media_backdrop.dart';
 import '../widgets/optimized_media_image.dart';
 import '../utils/media_image_helper.dart';
@@ -110,6 +113,7 @@ import '../theme/type_scale.dart';
 
 part 'media_detail/action_buttons.dart';
 part 'media_detail/playback_tracks_status.dart';
+part 'media_detail/nocturne_detail.dart';
 
 /// Ceiling for the detail hero's backdrop box, as a fraction of the window
 /// height. Roughly the natural height of a 16:9 backdrop on a 16:10 desktop
@@ -377,6 +381,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
   bool _hasLoadedExtras = false;
   bool _hasLoadedRelatedHubs = false;
   final _tvDetailRailKey = GlobalKey<TvBrowseRailState>();
+  final _nocturneEpisodeListKey = GlobalKey<NocturneEpisodeListState>();
   final _hubFocusMemory = HubFocusMemory();
   PageRoute<dynamic>? _route;
   RouteObserver<PageRoute<dynamic>>? _routeObserver;
@@ -2526,6 +2531,10 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     final metadata = _metadata;
 
     if (PlatformDetector.isTV()) {
+      if (_nocturneEpisodeListKey.currentState case final episodes?) {
+        episodes.requestFocus();
+        return;
+      }
       _tvDetailRailKey.currentState?.requestFocus();
       return;
     }
@@ -3785,8 +3794,13 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     final stableRailHeight = _tvDetailStableRailHeight;
     final railHeight = stableRailHeight == null || rawRailHeight > stableRailHeight ? rawRailHeight : stableRailHeight;
     final railTopPadding = 12 * detailScale;
-    final foregroundBottom = (railHeight - railTopPadding) + (_tvDetailActionRailGap * detailScale);
-    final spotlightLeft = (24 * detailScale).clamp(18.0, 40.0).toDouble();
+    final nocturneEpisodes = _usesNocturneEpisodeList(context, detailHubs);
+    final foregroundBottom = nocturneEpisodes
+        ? size.height * _NocturneMediaDetail.episodeListHeight + 16 * detailScale
+        : (railHeight - railTopPadding) + (_tvDetailActionRailGap * detailScale);
+    final spotlightLeft = PlezyLayout.isNocturne(context)
+        ? PlezyLayout.of(context).safeX * detailScale
+        : (24 * detailScale).clamp(18.0, 40.0).toDouble();
     // See _tvDetailRouteSettled. The children stay in place (only their
     // content is withheld) so the Stack keeps its elements across the swap.
     final buildHiddenContent = _tvDetailRevealed || _tvDetailRouteSettled;
@@ -3802,8 +3816,14 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
           child: buildHiddenContent
               ? ListenableBuilder(
                   listenable: _tvDetailForegroundListenable,
-                  builder: (context, _) =>
-                      _buildTvDetailForeground(context, metadata, hideSpoilers: hideSpoilers, scale: detailScale),
+                  builder: (context, _) => PlezyLayout.isNocturne(context)
+                      ? _buildNocturneTvDetailForeground(
+                          context,
+                          metadata,
+                          hideSpoilers: hideSpoilers,
+                          scale: detailScale,
+                        )
+                      : _buildTvDetailForeground(context, metadata, hideSpoilers: hideSpoilers, scale: detailScale),
                 )
               : const SizedBox.shrink(),
         ),
@@ -3842,7 +3862,15 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
             context: context,
           )!,
         ),
-        if (buildHiddenContent && detailHubs.isNotEmpty)
+        if (buildHiddenContent && nocturneEpisodes)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: size.height * _NocturneMediaDetail.episodeListHeight,
+            child: _buildNocturneEpisodeList(context, metadata, detailHubs),
+          )
+        else if (buildHiddenContent && detailHubs.isNotEmpty)
           Positioned(
             left: 0,
             right: 0,
@@ -3883,15 +3911,25 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
         child: Scaffold(
           body: Stack(
             children: [
-              TvSpotlightBackground(
-                item: metadata,
-                client: _getArtworkMediaClient(context),
-                showInfo: false,
-                localArtworkPathResolver: widget.isOffline
-                    ? (path) => _offlineArtworkCandidatePath(context, path)
-                    : null,
-                allowNetwork: !widget.isOffline,
-              ),
+              if (PlezyLayout.isNocturne(context))
+                NocturneBackdrop(
+                  item: metadata,
+                  client: _getArtworkMediaClient(context),
+                  localArtworkPathResolver: widget.isOffline
+                      ? (path) => _offlineArtworkCandidatePath(context, path)
+                      : null,
+                  allowNetwork: !widget.isOffline,
+                )
+              else
+                TvSpotlightBackground(
+                  item: metadata,
+                  client: _getArtworkMediaClient(context),
+                  showInfo: false,
+                  localArtworkPathResolver: widget.isOffline
+                      ? (path) => _offlineArtworkCandidatePath(context, path)
+                      : null,
+                  allowNetwork: !widget.isOffline,
+                ),
               _buildTvDetailRevealGate(revealContent, handleBack),
             ],
           ),

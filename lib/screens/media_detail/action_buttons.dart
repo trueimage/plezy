@@ -23,7 +23,9 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
   Widget _buildAvailableActionButtons(BuildContext context, MediaItem metadata) {
     final isTv = PlatformDetector.isTV();
     final tvScale = TvLayoutConstants.scaleOf(context);
-    final actionSize = isTv ? _tvDetailActionSize * tvScale : 48.0;
+    final actionSize = isTv
+        ? (PlezyLayout.isNocturne(context) ? _NocturneMediaDetail.nocturneActionSize : _tvDetailActionSize) * tvScale
+        : 48.0;
     final playButtonLabel = _getPlayButtonLabel(metadata);
     final playIcon = _getPlayButtonIcon(metadata);
     final playActionLabel = playIcon == Symbols.resume_rounded ? t.common.resume : t.common.play;

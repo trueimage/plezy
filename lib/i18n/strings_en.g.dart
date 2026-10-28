@@ -6199,6 +6199,15 @@ class Translations$nocturne$en {
 
 	/// en: 'Next up'
 	String get nextUp => 'Next up';
+
+	/// en: 'Watched'
+	String get watched => 'Watched';
+
+	/// en: '${count} versions'
+	String versions({required Object count}) => '${count} versions';
+
+	/// en: 'Directed by ${name}'
+	String directedBy({required Object name}) => 'Directed by ${name}';
 }
 
 // Path: appIcon.names
@@ -10478,6 +10487,9 @@ extension on Translations {
 			'deepLinks.copied' => 'Link copied',
 			'nocturne.details' => 'Details',
 			'nocturne.nextUp' => 'Next up',
+			'nocturne.watched' => 'Watched',
+			'nocturne.versions' => ({required Object count}) => '${count} versions',
+			'nocturne.directedBy' => ({required Object name}) => 'Directed by ${name}',
 			_ => null,
 		};
 	}

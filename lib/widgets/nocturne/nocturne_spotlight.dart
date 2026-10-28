@@ -115,10 +115,16 @@ class NocturneBackdrop extends StatelessWidget {
     required this.client,
     this.heightFactor,
     this.sideScrim = true,
+    this.localArtworkPathResolver,
+    this.allowNetwork = true,
   });
 
   final MediaItem? item;
   final MediaServerClient? client;
+
+  /// Downloaded artwork for offline titles.
+  final String? Function(String? artworkPath)? localArtworkPathResolver;
+  final bool allowNetwork;
 
   /// Share of the height the artwork covers before the bottom scrim has faded
   /// it into the page; the layout's backdrop height when null.
@@ -158,6 +164,10 @@ class NocturneBackdrop extends StatelessWidget {
                         // backdrop under the user.
                         imagePaths: [paths.first],
                         client: client,
+                        localArtworkPathResolver: localArtworkPathResolver == null
+                            ? null
+                            : (path) => localArtworkPathResolver!(path),
+                        allowNetwork: allowNetwork,
                         width: size.width,
                         height: artHeight,
                         alignment: const Alignment(0.36, -0.2),

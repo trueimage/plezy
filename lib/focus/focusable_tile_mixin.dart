@@ -50,16 +50,19 @@ mixin FocusableTileStateMixin<T extends StatefulWidget> on State<T> {
   Widget buildListFocus(BuildContext context, Widget tile) {
     if (FocusTheme.of(context).listStyle != FocusListStyle.inverted) return tile;
     final focused = effectiveFocusNode.hasFocus && InputModeTracker.isKeyboardMode(context);
-    if (!focused) return tile;
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    // The wrappers stay in the tree whether or not the row is focused, so
+    // focus never rebuilds the tile (and its ink highlight) from scratch.
+    final foreground = focused ? scheme.surface : null;
     return Theme(
-      data: Theme.of(context).copyWith(focusColor: scheme.onSurface),
+      data: theme.copyWith(focusColor: scheme.onSurface),
       child: ListTileTheme.merge(
-        textColor: scheme.surface,
-        iconColor: scheme.surface,
-        selectedColor: scheme.surface,
+        textColor: foreground,
+        iconColor: foreground,
+        selectedColor: foreground,
         child: DefaultTextStyle.merge(
-          style: TextStyle(color: scheme.surface),
+          style: TextStyle(color: foreground),
           child: tile,
         ),
       ),

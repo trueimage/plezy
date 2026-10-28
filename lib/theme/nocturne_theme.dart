@@ -153,6 +153,8 @@ abstract final class NocturneTheme {
   );
 
   /// The report's Manrope scale: TV sizes at 1080p, then desktop and phone.
+  /// The TV browse rail's own labels stay near their classic sizes, because
+  /// the rail sizes its cards for them.
   static const type = TypeScale(
     fontFamily: fontFamily,
     heroTitle: TypeSize(regular: 44, phone: 32, tv: 64),
@@ -166,11 +168,11 @@ abstract final class NocturneTheme {
     shelfHeader: TypeSize(regular: 22, phone: 19, tv: 32),
     shelfCount: TypeSize(regular: 12.5, phone: 12, tv: 24),
     shelfAction: TypeSize(regular: 14, phone: 14, tv: 26),
-    railHeader: TypeSize(tv: 32),
-    railServer: TypeSize(tv: 24),
-    railCardTitle: TypeSize(tv: 28),
-    railCardCaption: TypeSize(tv: 24),
-    railAction: TypeSize(tv: 26),
+    railHeader: TypeSize(tv: 24),
+    railServer: TypeSize(tv: 16),
+    railCardTitle: TypeSize(tv: 14),
+    railCardCaption: TypeSize(tv: 12),
+    railAction: TypeSize(tv: 14),
     cardTitle: TypeSize(regular: 15, phone: 14),
     cardCaption: TypeSize(regular: 12.5, phone: 12),
     listTitle: TypeSize(regular: 14),
