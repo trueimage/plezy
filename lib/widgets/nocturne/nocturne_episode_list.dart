@@ -1,3 +1,6 @@
+import 'dart:async' show unawaited;
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -11,12 +14,14 @@ import '../../media/media_item.dart';
 import '../../media/media_item_types.dart';
 import '../../media/media_server_client.dart';
 import '../../services/device_performance.dart';
+import '../../providers/watch_state_store.dart';
 import '../../theme/mono_tokens.dart';
 import '../../theme/surface_tokens.dart';
 import '../../utils/formatters.dart';
 import '../../utils/media_image_helper.dart' show ImageType;
 import '../app_icon.dart';
 import '../optimized_media_image.dart';
+import '../tv_browse_rail.dart' show TvRailTrailing;
 import 'nocturne_spotlight.dart';
 
 /// Seasons and episodes on TV in the Nocturne layout: a row of season chips
@@ -39,12 +44,16 @@ class NocturneEpisodeList extends StatefulWidget {
     this.initialEpisodeId,
     this.hideSpoilers = false,
     this.unwatchedCountOf,
+    this.trailingForHub,
+    this.onRetryHub,
   });
 
   /// One hub per season, each holding its loaded episodes; a single hub
   /// (a season, or a show listed without seasons) shows no chips.
   final List<MediaHub> seasons;
   final int selectedSeason;
+  final TvRailTrailing Function(MediaHub hub)? trailingForHub;
+  final void Function(MediaHub hub)? onRetryHub;
   final MediaServerClient? Function(MediaItem item) clientFor;
   final void Function(MediaHub season, int index) onSeasonSelected;
   final void Function(MediaHub season, MediaItem episode) onEpisodeFocused;
@@ -71,6 +80,13 @@ class NocturneEpisodeListState extends State<NocturneEpisodeList> {
 
   /// The episode row last focused, so focus comes back to it.
   int _episodeIndex = 0;
+  int _focusRequest = 0;
+  bool _pendingFocus = false;
+  bool _initialResolved = false;
+  final _retryNode = FocusNode(debugLabel: 'nocturne_episode_retry');
+
+  TvRailTrailing get _trailing =>
+      _season == null ? TvRailTrailing.none : widget.trailingForHub?.call(_season!) ?? TvRailTrailing.none;
 
   MediaHub? get _season =>
       widget.seasons.isEmpty ? null : widget.seasons[widget.selectedSeason.clamp(0, widget.seasons.length - 1)];
@@ -80,16 +96,40 @@ class NocturneEpisodeListState extends State<NocturneEpisodeList> {
   @override
   void initState() {
     super.initState();
-    final initial = widget.initialEpisodeId;
-    final items = _season?.items ?? const <MediaItem>[];
-    if (initial != null) {
-      final index = items.indexWhere((item) => item.id == initial);
-      if (index >= 0) _episodeIndex = index;
+    _resolveInitialEpisode();
+  }
+
+  void _resolveInitialEpisode() {
+    if (_initialResolved) return;
+    final index = _season?.items.indexWhere((item) => item.id == widget.initialEpisodeId) ?? -1;
+    if (index >= 0) {
+      _episodeIndex = index;
+      _initialResolved = true;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant NocturneEpisodeList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldSeason = oldWidget.seasons.isEmpty
+        ? null
+        : oldWidget.seasons[oldWidget.selectedSeason.clamp(0, oldWidget.seasons.length - 1)];
+    if (oldSeason?.id != _season?.id || oldWidget.initialEpisodeId != widget.initialEpisodeId) {
+      _focusRequest++;
+      _episodeIndex = 0;
+      _initialResolved = false;
+    }
+    _resolveInitialEpisode();
+    if (_pendingFocus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _pendingFocus) requestFocus();
+      });
     }
   }
 
   @override
   void dispose() {
+    _retryNode.dispose();
     _scroll.dispose();
     for (final node in [..._chipNodes, ..._episodeNodes]) {
       node.dispose();
@@ -107,12 +147,67 @@ class NocturneEpisodeListState extends State<NocturneEpisodeList> {
   /// season has no episodes yet.
   void requestFocus() {
     final items = _season?.items ?? const <MediaItem>[];
+    _pendingFocus = items.isEmpty && _trailing != TvRailTrailing.error;
     if (items.isEmpty) {
-      if (_showChips && widget.selectedSeason < _chipNodes.length) _chipNodes[widget.selectedSeason].requestFocus();
+      if (_trailing == TvRailTrailing.error) {
+        _retryNode.requestFocus();
+      } else if (_showChips && widget.selectedSeason < _chipNodes.length) {
+        _chipNodes[widget.selectedSeason].requestFocus();
+      }
       return;
     }
-    final index = _episodeIndex.clamp(0, items.length - 1);
-    if (index < _episodeNodes.length) _episodeNodes[index].requestFocus();
+    unawaited(_focusEpisode(_episodeIndex.clamp(0, items.length - 1)));
+  }
+
+  Future<void> _focusEpisode(int index) async {
+    final request = ++_focusRequest;
+    final seasonId = _season?.id;
+    while (mounted && request == _focusRequest && _season?.id == seasonId) {
+      final count = _season?.items.length ?? 0;
+      if (index > count || (index == count && _trailing != TvRailTrailing.error)) return;
+      final node = index == count ? _retryNode : _episodeNodes[index];
+      if (node.context != null) {
+        await Scrollable.ensureVisible(node.context!, alignment: 0.1);
+        if (mounted && request == _focusRequest) node.requestFocus();
+        return;
+      }
+      if (!_scroll.hasClients) return;
+      final position = _scroll.position;
+      final attached = _episodeNodes.indexWhere((node) => node.context != null);
+      final direction = attached < 0 || index > attached ? 1 : -1;
+      final offset = (position.pixels + direction * position.viewportDimension).clamp(
+        position.minScrollExtent,
+        position.maxScrollExtent,
+      );
+      if (offset == position.pixels) return;
+      _scroll.jumpTo(offset);
+      await WidgetsBinding.instance.endOfFrame;
+    }
+  }
+
+  KeyEventResult _onRetryKey(KeyEvent event) {
+    if (!event.isActionable) return KeyEventResult.ignored;
+    if (event.logicalKey.isSelectKey) {
+      _pendingFocus = _season?.items.isEmpty ?? true;
+      widget.onRetryHub?.call(_season!);
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey.isBackKey) {
+      widget.onBack();
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+      final count = _season?.items.length ?? 0;
+      if (count > 0) {
+        unawaited(_focusEpisode(count - 1));
+      } else if (_showChips) {
+        _chipNodes[widget.selectedSeason].requestFocus();
+      } else {
+        widget.onNavigateUp();
+      }
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.handled;
   }
 
   KeyEventResult _onChipKey(int index, KeyEvent event) {
@@ -123,10 +218,14 @@ class NocturneEpisodeListState extends State<NocturneEpisodeList> {
       return KeyEventResult.handled;
     }
     if (key.isBackKey) {
+      _pendingFocus = false;
+      _focusRequest++;
       widget.onBack();
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.arrowUp) {
+      _pendingFocus = false;
+      _focusRequest++;
       widget.onNavigateUp();
       return KeyEventResult.handled;
     }
@@ -149,16 +248,18 @@ class NocturneEpisodeListState extends State<NocturneEpisodeList> {
     if (season == null) return KeyEventResult.ignored;
     final key = event.logicalKey;
     if (key.isSelectKey) {
-      widget.onEpisodeActivated(season, season.items[index]);
+      widget.onEpisodeActivated(season, context.readFreshWatchState(season.items[index]));
       return KeyEventResult.handled;
     }
     if (key.isBackKey) {
+      _pendingFocus = false;
+      _focusRequest++;
       widget.onBack();
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.arrowUp) {
       if (index > 0) {
-        _episodeNodes[index - 1].requestFocus();
+        unawaited(_focusEpisode(index - 1));
       } else if (_showChips && widget.selectedSeason < _chipNodes.length) {
         _chipNodes[widget.selectedSeason].requestFocus();
       } else {
@@ -168,7 +269,11 @@ class NocturneEpisodeListState extends State<NocturneEpisodeList> {
     }
     if (key == LogicalKeyboardKey.arrowDown) {
       // Down past the last episode stays put.
-      if (index + 1 < season.items.length) _episodeNodes[index + 1].requestFocus();
+      if (index + 1 < season.items.length) {
+        unawaited(_focusEpisode(index + 1));
+      } else if (_trailing == TvRailTrailing.error) {
+        unawaited(_focusEpisode(season.items.length));
+      }
       return KeyEventResult.handled;
     }
     // A list has nothing sideways; keep focus on the row.
@@ -180,7 +285,7 @@ class NocturneEpisodeListState extends State<NocturneEpisodeList> {
     final season = _season;
     if (!focused || season == null || index >= season.items.length) return;
     _episodeIndex = index;
-    widget.onEpisodeFocused(season, season.items[index]);
+    widget.onEpisodeFocused(season, context.readFreshWatchState(season.items[index]));
   }
 
   @override
@@ -221,20 +326,45 @@ class NocturneEpisodeListState extends State<NocturneEpisodeList> {
           child: ListView.builder(
             controller: _scroll,
             padding: EdgeInsets.fromLTRB(m.safeX, m.pick(tv: 4, desktop: 4, phone: 4), m.safeX, m.safeX),
-            itemCount: items.length,
-            itemBuilder: (context, index) => Padding(
-              padding: EdgeInsets.only(bottom: m.pick(tv: 12, desktop: 8, phone: 8)),
-              child: _EpisodeRow(
-                episode: items[index],
-                client: widget.clientFor(items[index]),
-                focusNode: _episodeNodes[index],
-                autofocus: false,
-                hideSpoilers: widget.hideSpoilers,
-                onKey: (event) => _onEpisodeKey(index, event),
-                onFocusChange: (focused) => _onEpisodeFocus(index, focused),
-                onTap: () => widget.onEpisodeActivated(season!, items[index]),
-              ),
-            ),
+            itemCount: items.length + (_trailing == TvRailTrailing.none ? 0 : 1),
+            itemBuilder: (context, index) {
+              if (index == items.length) {
+                if (_trailing == TvRailTrailing.loading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                return Focus(
+                  focusNode: _retryNode,
+                  onKeyEvent: (_, event) => _onRetryKey(event),
+                  child: ListenableBuilder(
+                    listenable: _retryNode,
+                    builder: (context, _) => OutlinedButton(
+                      onPressed: () {
+                        _pendingFocus = items.isEmpty;
+                        widget.onRetryHub?.call(season!);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: _retryNode.hasFocus ? tokens(context).accent : null,
+                      ),
+                      child: Text(t.common.retry),
+                    ),
+                  ),
+                );
+              }
+              final episode = context.withFreshWatchState(items[index]);
+              return Padding(
+                padding: EdgeInsets.only(bottom: m.pick(tv: 12, desktop: 8, phone: 8)),
+                child: _EpisodeRow(
+                  episode: episode,
+                  client: widget.clientFor(episode),
+                  focusNode: _episodeNodes[index],
+                  autofocus: false,
+                  hideSpoilers: widget.hideSpoilers,
+                  onKey: (event) => _onEpisodeKey(index, event),
+                  onFocusChange: (focused) => _onEpisodeFocus(index, focused),
+                  onTap: () => widget.onEpisodeActivated(season!, context.readFreshWatchState(items[index])),
+                ),
+              );
+            },
           ),
         ),
       ],
@@ -405,14 +535,18 @@ class _EpisodeRow extends StatelessWidget {
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
-                          OptimizedMediaImage(
-                            client: client,
-                            imagePath: episode.thumbPath,
-                            width: stillWidth,
-                            height: stillHeight,
-                            fit: BoxFit.cover,
-                            imageType: ImageType.thumb,
-                            fallbackIcon: Symbols.movie_rounded,
+                          ImageFiltered(
+                            enabled: spoiler,
+                            imageFilter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                            child: OptimizedMediaImage(
+                              client: client,
+                              imagePath: episode.thumbPath,
+                              width: stillWidth,
+                              height: stillHeight,
+                              fit: BoxFit.cover,
+                              imageType: ImageType.thumb,
+                              fallbackIcon: Symbols.movie_rounded,
+                            ),
                           ),
                           if (number != null)
                             Positioned(

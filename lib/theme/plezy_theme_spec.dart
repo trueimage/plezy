@@ -33,18 +33,14 @@ class PlezyThemeSpec {
   /// theme then does not carry at all.
   final PlezyLayout? layout;
 
-  PlezyThemeSpec copyWith({MonoPalette? palette, PlezyLayout? layout}) => PlezyThemeSpec(
+  PlezyThemeSpec copyWith({MonoPalette? palette}) => PlezyThemeSpec(
     palette ?? this.palette,
     focus: focus,
     surfaces: surfaces,
     type: type,
     metrics: metrics,
-    layout: layout ?? this.layout,
+    layout: layout,
   );
-
-  /// This spec drawing the classic layout.
-  PlezyThemeSpec withoutLayout() =>
-      PlezyThemeSpec(palette, focus: focus, surfaces: surfaces, type: type, metrics: metrics);
 
   @override
   bool operator ==(Object other) =>

@@ -11,9 +11,8 @@ enum LayoutVariant {
   nocturne,
 }
 
-/// The stored layout choice. [auto] follows the theme in use; the other values
-/// pin a layout whatever the theme.
-enum LayoutVariantSetting { auto, classic, nocturne }
+/// The stored layout choice. [auto] follows the theme in use.
+enum LayoutVariantSetting { auto }
 
 /// The layout a theme draws, and the measurements the [LayoutVariant.nocturne]
 /// screens are built from, at 1080p on TV (scale them with

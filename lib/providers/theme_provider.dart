@@ -30,7 +30,6 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
   settings.ThemeMode _storedMode = settings.ThemeMode.system;
   MonoPalette? _customPalette;
   NocturneOptions _nocturne = NocturneOptions.defaults;
-  LayoutVariantSetting _layout = LayoutVariantSetting.auto;
   late ThemeChoice _choice;
   late Brightness _systemBrightness;
   bool? _windowChromeDark;
@@ -50,16 +49,15 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
       prefs: [
         settings.SettingsService.themeMode,
         settings.SettingsService.customThemePalette,
-        settings.SettingsService.layoutVariant,
         settings.SettingsService.nocturneTrueBlack,
         settings.SettingsService.nocturneAccent,
       ],
       onRefresh: (service) {
-        final previous = (_storedMode, _customPalette, _nocturne, _layout);
+        final previous = (_storedMode, _customPalette, _nocturne);
         _readStored(service);
         // A stored change that paints the same still changes what the picker
         // shows (the saved-but-locked marker, the Custom swatch).
-        _apply(pushSplash: true, forceNotify: (_storedMode, _customPalette, _nocturne, _layout) != previous);
+        _apply(pushSplash: true, forceNotify: (_storedMode, _customPalette, _nocturne) != previous);
       },
     );
     unawaited(_settingsBinding.bind());
@@ -88,11 +86,9 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
     _storedMode = service.read(settings.SettingsService.themeMode);
     _customPalette = service.read(settings.SettingsService.customThemePalette);
     _nocturne = nocturneOptionsOf(service);
-    _layout = service.read(settings.SettingsService.layoutVariant);
   }
 
-  ThemeChoice _resolve() =>
-      resolve(_storedMode, _customPalette, unlocked: _supporter.isUnlocked, nocturne: _nocturne, layout: _layout);
+  ThemeChoice _resolve() => resolve(_storedMode, _customPalette, unlocked: _supporter.isUnlocked, nocturne: _nocturne);
 
   /// Re-resolves after the stored choice or the Supporter entitlement changed.
   /// The stored choice is never rewritten: losing the entitlement only changes
@@ -134,7 +130,7 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
   /// screen, so the picker can show it is still saved; null when the saved
   /// choice is what paints, or would not paint even if unlocked.
   settings.ThemeMode? get lockedStoredThemeMode {
-    final ifUnlocked = resolve(_storedMode, _customPalette, unlocked: true, nocturne: _nocturne, layout: _layout).mode;
+    final ifUnlocked = resolve(_storedMode, _customPalette, unlocked: true, nocturne: _nocturne).mode;
     return ifUnlocked == _choice.mode ? null : ifUnlocked;
   }
 
@@ -146,27 +142,17 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
   /// Static so the pre-provider startup frame resolves through the same rule
   /// and never flashes a locked perk or the fallback for an unlocked one. It
   /// runs after TV detection there, like the pref default it reads.
-  ///
-  /// [layout] pins a layout over the theme's own; [LayoutVariantSetting.auto]
-  /// keeps it.
   static ThemeChoice resolve(
     settings.ThemeMode stored,
     MonoPalette? customPalette, {
     required bool unlocked,
     NocturneOptions nocturne = NocturneOptions.defaults,
-    LayoutVariantSetting layout = LayoutVariantSetting.auto,
   }) {
     final locked = stored.isSupporterPerk && !unlocked;
     final missingCustom = stored == settings.ThemeMode.custom && customPalette == null;
     final mode = locked || missingCustom ? settings.SettingsService.themeMode.resolvedDefault : stored;
-    return (mode: mode, spec: _withLayout(specFor(mode, customPalette: customPalette, nocturne: nocturne), layout));
+    return (mode: mode, spec: specFor(mode, customPalette: customPalette, nocturne: nocturne));
   }
-
-  static PlezyThemeSpec? _withLayout(PlezyThemeSpec? spec, LayoutVariantSetting layout) => switch ((spec, layout)) {
-    (null, _) || (_, LayoutVariantSetting.auto) => spec,
-    (final spec?, LayoutVariantSetting.classic) => spec.withoutLayout(),
-    (final spec?, LayoutVariantSetting.nocturne) => spec.copyWith(layout: PlezyLayout.nocturne),
-  };
 
   /// [resolve] for the choice stored in [service].
   static ThemeChoice resolveStored(settings.SettingsService service, {required bool unlocked}) => resolve(
@@ -174,7 +160,6 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
     service.read(settings.SettingsService.customThemePalette),
     unlocked: unlocked,
     nocturne: nocturneOptionsOf(service),
-    layout: service.read(settings.SettingsService.layoutVariant),
   );
 
   /// The theme spec [mode] paints with: Nocturne's whole spec, or

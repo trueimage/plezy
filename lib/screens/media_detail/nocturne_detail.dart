@@ -177,11 +177,19 @@ extension _NocturneMediaDetail on _MediaDetailScreenState {
       seasons: seasons,
       selectedSeason: selected < 0 ? 0 : selected,
       clientFor: (_) => _getArtworkMediaClient(context),
+      trailingForHub: _tvDetailTrailingState,
+      onRetryHub: _retryTvDetailHub,
       hideSpoilers: SettingsService.instance.read(SettingsService.hideSpoilers),
       initialEpisodeId: _tvDetailInitialItemId(metadata),
       // Season hubs follow _seasons one to one; a lone episode hub has none.
       unwatchedCountOf: seasons.length == _seasons.length ? (index) => _fresh(_seasons[index]).unwatchedCount : null,
-      onSeasonSelected: (hub, index) => _handleTvDetailHubChanged(hub, hubs.indexOf(hub)),
+      onSeasonSelected: (hub, index) {
+        if (_tvDetailTrailingState(hub) == TvRailTrailing.error) {
+          _retryTvDetailHub(hub);
+        } else {
+          _handleTvDetailHubChanged(hub, hubs.indexOf(hub));
+        }
+      },
       onEpisodeFocused: (hub, episode) {
         _setTvDetailActionRowFocus(false);
         _handleTvDetailFocusedRailItemChanged(hub, episode);

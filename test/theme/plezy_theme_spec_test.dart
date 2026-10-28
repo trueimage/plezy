@@ -24,6 +24,16 @@ void main() {
       expect(a.hashCode, b.hashCode);
     });
 
+    test('palette changes preserve the theme layout', () {
+      final spec = NocturneTheme.spec();
+      final changed = spec.copyWith(palette: MonoPalette.oled);
+      expect(changed.palette, MonoPalette.oled);
+      expect(changed.layout, spec.layout);
+      expect(changed.focus, spec.focus);
+      expect(changed.surfaces, spec.surfaces);
+      expect(changed.type, spec.type);
+    });
+
     test('specs with different palettes differ', () {
       expect(const PlezyThemeSpec(MonoPalette.dark), isNot(const PlezyThemeSpec(MonoPalette.oled)));
     });
