@@ -138,9 +138,8 @@ void goldenMatrix(
   });
 }
 
-/// Text showing the wall-clock time: the player's clock and its "ends at"
-/// estimate. Both read `DateTime.now()`, which the test clock does not
-/// control, so their text is painted over in the captured image.
+/// Wall-clock labels painted over by [_captureMasked]. See [setUpGoldenCase]
+/// for the clock override that keeps their glyph bounds deterministic.
 final List<Finder> _wallClockFinders = [
   for (final owner in [SystemClock, FinishTimeBuilder])
     find.descendant(of: find.byType(owner), matching: find.byType(RichText)),
