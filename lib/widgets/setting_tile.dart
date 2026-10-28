@@ -322,6 +322,7 @@ class SettingSegmentedTile<T> extends StatelessWidget {
   final Pref<T> pref;
   final IconData icon;
   final String title;
+  final String? subtitle;
   final List<ButtonSegment<T>> segments;
   final FutureOr<void> Function(T)? onAfterWrite;
 
@@ -330,6 +331,7 @@ class SettingSegmentedTile<T> extends StatelessWidget {
     required this.pref,
     required this.icon,
     required this.title,
+    this.subtitle,
     required this.segments,
     this.onAfterWrite,
   });
@@ -341,6 +343,7 @@ class SettingSegmentedTile<T> extends StatelessWidget {
       builder: (_, value, _) => SegmentedSetting<T>(
         icon: icon,
         title: title,
+        subtitle: subtitle,
         segments: segments,
         selected: value,
         onChanged: (v) => _writeAndNotify(context, pref, v, onAfterWrite),

@@ -572,6 +572,36 @@ class Translations$settings$en {
 	/// en: 'Paper'
 	String get paperTheme => 'Paper';
 
+	/// en: 'Nocturne'
+	String get nocturneTheme => 'Nocturne';
+
+	/// en: 'Cinematic dark · includes the Nocturne layout'
+	String get nocturneThemeDescription => 'Cinematic dark · includes the Nocturne layout';
+
+	/// en: 'Nocturne'
+	String get nocturneSettings => 'Nocturne';
+
+	/// en: 'Accent'
+	String get nocturneAccent => 'Accent';
+
+	/// en: 'Champagne is the default. Ivory keeps chrome monochrome.'
+	String get nocturneAccentDescription => 'Champagne is the default. Ivory keeps chrome monochrome.';
+
+	/// en: 'Champagne'
+	String get nocturneAccentChampagne => 'Champagne';
+
+	/// en: 'Ivory'
+	String get nocturneAccentIvory => 'Ivory';
+
+	/// en: 'Ice'
+	String get nocturneAccentIce => 'Ice';
+
+	/// en: 'True black background'
+	String get nocturneTrueBlack => 'True black background';
+
+	/// en: 'For OLED panels. Surfaces stay tonal.'
+	String get nocturneTrueBlackDescription => 'For OLED panels. Surfaces stay tonal.';
+
 	/// en: 'Library Density'
 	String get libraryDensity => 'Library Density';
 
@@ -8278,6 +8308,16 @@ extension on Translations {
 			'settings.forestTheme' => 'Forest',
 			'settings.plumTheme' => 'Plum',
 			'settings.paperTheme' => 'Paper',
+			'settings.nocturneTheme' => 'Nocturne',
+			'settings.nocturneThemeDescription' => 'Cinematic dark · includes the Nocturne layout',
+			'settings.nocturneSettings' => 'Nocturne',
+			'settings.nocturneAccent' => 'Accent',
+			'settings.nocturneAccentDescription' => 'Champagne is the default. Ivory keeps chrome monochrome.',
+			'settings.nocturneAccentChampagne' => 'Champagne',
+			'settings.nocturneAccentIvory' => 'Ivory',
+			'settings.nocturneAccentIce' => 'Ice',
+			'settings.nocturneTrueBlack' => 'True black background',
+			'settings.nocturneTrueBlackDescription' => 'For OLED panels. Surfaces stay tonal.',
 			'settings.libraryDensity' => 'Library Density',
 			'settings.displayScale' => 'Display Scale',
 			'settings.compact' => 'Compact',
@@ -8594,6 +8634,8 @@ extension on Translations {
 			'themeEditor.locked' => 'Unlock with Supporter',
 			'themeEditor.savedLocked' => 'Saved — unlocks with Supporter',
 			'themeEditor.title' => 'Custom Theme',
+			_ => null,
+		} ?? switch (path) {
 			'themeEditor.startFrom' => 'Start from',
 			'themeEditor.startFromDescription' => 'Copy all colors from another theme',
 			'themeEditor.colors' => 'Colors',
@@ -8604,8 +8646,6 @@ extension on Translations {
 			'themeEditor.slots.text' => 'Text',
 			'themeEditor.slots.textMuted' => 'Secondary text',
 			'themeEditor.slots.accent' => 'Accent',
-			_ => null,
-		} ?? switch (path) {
 			'themeEditor.opacity' => 'Opacity',
 			'themeEditor.hexHint' => '#RRGGBB or #AARRGGBB',
 			'themeEditor.fromOtherThemes' => 'From other themes',
@@ -9108,6 +9148,8 @@ extension on Translations {
 			'profiles.incorrectPin' => 'Incorrect PIN.',
 			'profiles.incorrectPinTryAgain' => 'Incorrect PIN. Please try again.',
 			'profiles.sourceProfileMissingParentAccount' => 'Source profile is missing its parent account.',
+			_ => null,
+		} ?? switch (path) {
 			'profiles.failedToLoadHomeUsers' => 'Could not load your Plex Home users. Check your connection and try again.',
 			'profiles.failedToVerifyPin' => 'Failed to verify PIN.',
 			'profiles.newProfile' => 'New profile',
@@ -9118,8 +9160,6 @@ extension on Translations {
 			'profiles.pinsDontMatch' => 'PINs don\'t match',
 			'profiles.tokenIdentityMismatch' => 'The Plex profile token resolved to an unexpected server',
 			'connections.sectionTitle' => 'Connections',
-			_ => null,
-		} ?? switch (path) {
 			'connections.addConnection' => 'Add connection',
 			'connections.addConnectionSubtitleNoProfile' => 'Sign in with Plex or connect a Jellyfin or Emby server',
 			'connections.addConnectionSubtitleScoped' => ({required Object displayName}) => 'Add to ${displayName}: Plex, Jellyfin, Emby, or another profile connection',
@@ -9622,6 +9662,8 @@ extension on Translations {
 			'liveTv.guideReloadRequested' => 'Guide refresh requested',
 			'liveTv.guideReloadFailed' => 'Couldn\'t refresh the guide',
 			'liveTv.rulesProcessRequested' => 'Rule re-evaluation requested',
+			_ => null,
+		} ?? switch (path) {
 			'liveTv.rulesProcessFailed' => 'Couldn\'t re-evaluate recording rules',
 			'liveTv.recordShow' => 'Record show',
 			'liveTv.recordSettings.startEarly' => 'Start early (seconds)',
@@ -9632,8 +9674,6 @@ extension on Translations {
 			'liveTv.recordSettings.skipInLibrary' => 'Skip episodes already in the library',
 			'liveTv.recordSettings.keepUpTo' => 'Episodes to keep',
 			'liveTv.recordSettings.keepUpToHint' => '0 keeps every episode',
-			_ => null,
-		} ?? switch (path) {
 			'liveTv.startingInMinutes' => ({required Object minutes}) => 'Starting in ${minutes} min',
 			'liveTv.dayAtTime' => ({required Object day, required Object time}) => '${day} at ${time}',
 			'liveTv.invalidPlaybackData' => ({required Object product}) => '${product} returned invalid Live TV playback data',
@@ -10136,6 +10176,8 @@ extension on Translations {
 			'performanceOverlay.cacheLimit' => 'Cache Limit',
 			'performanceOverlay.speed' => 'Speed',
 			'performanceOverlay.player' => 'Player',
+			_ => null,
+		} ?? switch (path) {
 			'performanceOverlay.playMethod' => 'Play Method',
 			'performanceOverlay.memory' => 'Memory',
 			'performanceOverlay.uiFps' => 'UI FPS',
@@ -10146,8 +10188,6 @@ extension on Translations {
 			'performanceOverlay.decoderMediatekHw' => 'MediaTek HW',
 			'performanceOverlay.decoderExynosHw' => 'Exynos HW',
 			'performanceOverlay.decoderSoftware' => 'Software',
-			_ => null,
-		} ?? switch (path) {
 			'performanceOverlay.decoderHardware' => 'Hardware',
 			'performanceOverlay.tunnelingActive' => 'Active',
 			'performanceOverlay.dvRpuFailed' => ({required Object converted, required Object failures}) => '${converted} (${failures} failed)',

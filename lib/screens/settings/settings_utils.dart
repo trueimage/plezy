@@ -24,6 +24,7 @@ String themeModeLabel(settings.ThemeMode mode) => switch (mode) {
   settings.ThemeMode.light => t.settings.lightTheme,
   settings.ThemeMode.dark => t.settings.darkTheme,
   settings.ThemeMode.oled => t.settings.oledTheme,
+  settings.ThemeMode.nocturne => t.settings.nocturneTheme,
   settings.ThemeMode.ember => t.settings.emberTheme,
   settings.ThemeMode.glacier => t.settings.glacierTheme,
   settings.ThemeMode.forest => t.settings.forestTheme,

@@ -183,9 +183,9 @@ void main() {
     });
 
     test('every theme choice launches on a native splash mode Android knows', () {
-      // PlezyActivity / ThemeHelper only map these four; anything else would
-      // leave the launch window on the platform default.
-      const known = {'system', 'light', 'dark', 'oled'};
+      // PlezyActivity / ThemeHelper only map these; anything else would leave
+      // the launch window on the platform default.
+      const known = {'system', 'light', 'dark', 'oled', 'nocturne'};
       for (final mode in settings.ThemeMode.values) {
         final palette = ThemeProvider.resolve(mode, _custom, unlocked: true).palette;
         final native = ThemeProvider.nativeSplashMode(palette);

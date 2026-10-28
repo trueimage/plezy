@@ -28,6 +28,7 @@ const _builtIns = [
   settings.ThemeMode.light,
   settings.ThemeMode.dark,
   settings.ThemeMode.oled,
+  settings.ThemeMode.nocturne,
 ];
 
 const _presets = [
@@ -77,7 +78,7 @@ class ThemeSettingsScreen extends StatelessWidget {
 
     _ThemeOptionTile option(settings.ThemeMode mode) => _ThemeOptionTile(
       mode: mode,
-      palette: ThemeProvider.paletteFor(mode, customPalette: customPalette),
+      palette: ThemeProvider.specFor(mode, customPalette: customPalette, nocturne: theme.nocturneOptions)?.palette,
       selected: current == mode,
       autofocus: focusSelected && current == mode,
       locked: locked && mode.isSupporterPerk,
@@ -87,6 +88,8 @@ class ThemeSettingsScreen extends StatelessWidget {
           ? t.themeEditor.savedLocked
           : mode == settings.ThemeMode.custom && customPalette == null
           ? t.themeEditor.customEmpty
+          : mode == settings.ThemeMode.nocturne
+          ? t.settings.nocturneThemeDescription
           : null,
       onTap: () => _choose(context, mode),
     );

@@ -8,6 +8,8 @@ import '../../i18n/strings.g.dart';
 import '../../providers/catalog_sources_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../services/settings_service.dart' hide ThemeMode;
+import '../../services/settings_service.dart' as settings show ThemeMode;
+import '../../theme/nocturne_theme.dart';
 import '../../focus/focusable_slider.dart';
 import '../../services/device_performance.dart';
 import '../../utils/platform_detector.dart';
@@ -48,6 +50,8 @@ class AppearanceSettingsScreen extends StatelessWidget {
             if (Platform.isAndroid) _visualEffectsSelector(context),
           ],
         ),
+
+        if (context.watch<ThemeProvider>().themeMode == settings.ThemeMode.nocturne) const _NocturneSettingsGroup(),
 
         SettingsGroup(
           title: t.settings.libraryAndCards,
@@ -355,4 +359,38 @@ class AppearanceSettingsScreen extends StatelessWidget {
       ),
     ],
   );
+}
+
+/// Nocturne's own settings, shown while Nocturne is the theme: a pure black
+/// canvas for OLED panels, and the accent.
+class _NocturneSettingsGroup extends StatelessWidget {
+  const _NocturneSettingsGroup();
+
+  @override
+  Widget build(BuildContext context) {
+    return SettingsGroup(
+      title: t.settings.nocturneSettings,
+      children: [
+        SettingSegmentedTile<NocturneAccent>(
+          key: const ValueKey('nocturne_accent'),
+          pref: SettingsService.nocturneAccent,
+          icon: Symbols.flare_rounded,
+          title: t.settings.nocturneAccent,
+          subtitle: t.settings.nocturneAccentDescription,
+          segments: [
+            ButtonSegment(value: NocturneAccent.champagne, label: Text(t.settings.nocturneAccentChampagne)),
+            ButtonSegment(value: NocturneAccent.ivory, label: Text(t.settings.nocturneAccentIvory)),
+            ButtonSegment(value: NocturneAccent.ice, label: Text(t.settings.nocturneAccentIce)),
+          ],
+        ),
+        SettingSwitchTile(
+          key: const ValueKey('nocturne_true_black'),
+          pref: SettingsService.nocturneTrueBlack,
+          icon: Symbols.contrast_rounded,
+          title: t.settings.nocturneTrueBlack,
+          subtitle: t.settings.nocturneTrueBlackDescription,
+        ),
+      ],
+    );
+  }
 }

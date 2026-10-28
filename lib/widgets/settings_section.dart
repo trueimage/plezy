@@ -97,6 +97,9 @@ class SettingsGroup extends StatelessWidget {
 class SegmentedSetting<T> extends StatelessWidget {
   final IconData icon;
   final String title;
+
+  /// A line under [title] explaining the options; none when null.
+  final String? subtitle;
   final List<ButtonSegment<T>> segments;
   final T selected;
   final ValueChanged<T> onChanged;
@@ -105,6 +108,7 @@ class SegmentedSetting<T> extends StatelessWidget {
     super.key,
     required this.icon,
     required this.title,
+    this.subtitle,
     required this.segments,
     required this.selected,
     required this.onChanged,
@@ -121,7 +125,18 @@ class SegmentedSetting<T> extends StatelessWidget {
             children: [
               AppIcon(icon, fill: 1),
               const SizedBox(width: 16),
-              Text(title, style: settingsOptionTitleStyle(context)),
+              if (subtitle case final subtitle?)
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: .start,
+                    children: [
+                      Text(title, style: settingsOptionTitleStyle(context)),
+                      Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+                    ],
+                  ),
+                )
+              else
+                Text(title, style: settingsOptionTitleStyle(context)),
             ],
           ),
           const SizedBox(height: 12),
