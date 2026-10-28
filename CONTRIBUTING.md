@@ -42,10 +42,8 @@ The project includes automated CI checks that run on all pull requests:
    - This is `flutter test` with `-j` set to the core count. The default is half your cores, which
      leaves most of the machine idle because the suite is dominated by per-file compilation.
      Arguments are forwarded, so `scripts/run_tests.sh test/widgets/some_test.dart` works.
-   - Golden screenshot tests (`test/goldens`) compare every theme and form factor against committed images. They
-     only compare pixels on Linux; refresh or check them on any machine with `scripts/update_goldens.sh`. A change
-     that is not meant to look different must not change any existing golden image.
-     See [test/goldens/README.md](test/goldens/README.md).
+   - For golden screenshot coverage, comparison and update commands, and baseline review rules, see
+     [test/goldens/README.md](test/goldens/README.md).
 
 All these checks must pass before your changes can be merged.
 

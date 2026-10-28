@@ -71,7 +71,9 @@ scripts/update_goldens.sh                                          # regenerate 
 scripts/update_goldens.sh test/goldens/shell_golden_test.dart      # regenerate one file's images
 ```
 
-A full update starts from an empty `goldens/` directory, so images for tests that no longer exist are removed.
+A full update renders into an empty `goldens/` directory inside the container, so images for tests that no longer
+exist are removed when the successful render replaces the committed baselines. Full and targeted updates leave
+existing baselines untouched if rendering fails.
 `flutter test --update-goldens` refuses to write images on a host other than Linux x64.
 
 After updating, look at every changed image (`git status test/goldens/goldens`) before committing it.
