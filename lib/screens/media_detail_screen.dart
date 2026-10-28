@@ -105,6 +105,7 @@ import '../widgets/tv_spotlight_background.dart';
 import '../providers/account_preferences_controller.dart';
 import '../services/playback_track_preview.dart';
 import '../utils/error_message_utils.dart';
+import '../theme/surface_tokens.dart';
 
 part 'media_detail/action_buttons.dart';
 part 'media_detail/playback_tracks_status.dart';
@@ -3719,15 +3720,10 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
                     child: SizedBox(
                       height: MediaQuery.paddingOf(context).top + 58,
                       child: RasterizedGradient(
-                        gradient: LinearGradient(
+                        gradient: SurfaceTokens.of(context).detailTopScrim.gradient(
+                          theme.scaffoldBackgroundColor,
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [
-                            theme.scaffoldBackgroundColor.withValues(alpha: 0.8),
-                            theme.scaffoldBackgroundColor.withValues(alpha: 0.5),
-                            theme.scaffoldBackgroundColor.withValues(alpha: 0),
-                          ],
-                          stops: const [0.0, 0.3, 1.0],
                         ),
                       ),
                     ),
@@ -4755,19 +4751,10 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
                     // The ramp spans the art box, not the hero, so on wide windows
                     // it keeps fading past the hero edge and the bottom of the frame
                     // dissolves behind the overview instead of being cut off.
-                    const scrimAlphas = [0.20, 0.234, 0.325, 0.453, 0.60, 0.747, 0.875, 0.985, 0.998, 1.0];
-                    const scrimXs = [0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 0.9375, 1.0];
-                    const solidStop = 0.94;
                     return RasterizedGradient(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          for (final a in scrimAlphas) bgColor.withValues(alpha: a),
-                          bgColor,
-                        ],
-                        stops: [for (final x in scrimXs) solidStop * x, 1.0],
-                      ),
+                      gradient: SurfaceTokens.of(
+                        context,
+                      ).detailHeroScrim.gradient(bgColor, begin: Alignment.topCenter, end: Alignment.bottomCenter),
                     );
                   },
                 ),

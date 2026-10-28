@@ -9,6 +9,7 @@ import '../theme/mono_tokens.dart';
 import 'app_icon.dart';
 import 'media_progress_bar.dart';
 import 'unwatched_count_badge.dart';
+import '../theme/surface_tokens.dart';
 
 /// Size preset for [WatchedIndicator]: [standard] for grid/poster cards,
 /// [compact] for dense surfaces (folder tree rows, episode thumbnails).
@@ -80,6 +81,7 @@ class WatchedIndicator extends StatelessWidget {
     final bool showWatched = SettingsService.instance.read(SettingsService.showWatchedIndicators);
     final hasActiveProgress = item.hasActiveProgress;
     final unwatched = item.unwatchedCount;
+    final surfaces = SurfaceTokens.of(context);
     final barRadius = BorderRadius.only(
       bottomLeft: Radius.circular(size.barRadius),
       bottomRight: Radius.circular(size.barRadius),
@@ -95,11 +97,16 @@ class WatchedIndicator extends StatelessWidget {
             child: Container(
               padding: EdgeInsets.all(size.checkPadding),
               decoration: BoxDecoration(
-                color: tokens(context).text,
+                color: surfaces.badgeFill ?? tokens(context).text,
                 shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 4)],
+                boxShadow: surfaces.badgeShadows,
               ),
-              child: AppIcon(Symbols.check_rounded, fill: 1, color: tokens(context).bg, size: size.checkIconSize),
+              child: AppIcon(
+                Symbols.check_rounded,
+                fill: 1,
+                color: surfaces.badgeForeground ?? tokens(context).bg,
+                size: size.checkIconSize,
+              ),
             ),
           ),
         // Unwatched count for shows/seasons
@@ -124,7 +131,7 @@ class WatchedIndicator extends StatelessWidget {
               child: MediaProgressBar(
                 viewOffset: item.viewOffsetMs!,
                 duration: item.durationMs!,
-                minHeight: size.barMinHeight,
+                minHeight: surfaces.progressHeight ?? size.barMinHeight,
               ),
             ),
           ),
@@ -140,7 +147,7 @@ class WatchedIndicator extends StatelessWidget {
                 value: item.leafWatchFraction,
                 backgroundColor: tokens(context).outline,
                 valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
-                minHeight: size.barMinHeight,
+                minHeight: surfaces.progressHeight ?? size.barMinHeight,
               ),
             ),
           ),

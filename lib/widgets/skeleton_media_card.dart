@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import 'media_card.dart';
+import '../theme/surface_tokens.dart';
 
 /// Placeholder that mirrors the poster + title + subtitle layout of a real
 /// media card. Rendered in a sparse grid while items for that slot are in
@@ -10,27 +11,29 @@ class SkeletonMediaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: .all(8),
+    final surfaces = SurfaceTokens.of(context);
+    final textRadius = BorderRadius.all(Radius.circular(surfaces.skeletonTextRadius));
+    return Padding(
+      padding: const .all(8),
       child: Column(
         crossAxisAlignment: .start,
         children: [
           Expanded(
             child: ClipRRect(
-              borderRadius: BorderRadius.all(Radius.circular(8)),
-              child: SkeletonLoader(child: SizedBox.expand()),
+              borderRadius: BorderRadius.all(Radius.circular(surfaces.skeletonRadius)),
+              child: const SkeletonLoader(child: SizedBox.expand()),
             ),
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           SkeletonLoader(
-            borderRadius: BorderRadius.all(Radius.circular(4)),
-            child: SizedBox(height: 13, width: double.infinity),
+            borderRadius: textRadius,
+            child: const SizedBox(height: 13, width: double.infinity),
           ),
-          SizedBox(height: 3),
+          const SizedBox(height: 3),
           FractionallySizedBox(
             alignment: .centerLeft,
             widthFactor: 0.6,
-            child: SkeletonLoader(borderRadius: BorderRadius.all(Radius.circular(4)), child: SizedBox(height: 11)),
+            child: SkeletonLoader(borderRadius: textRadius, child: const SizedBox(height: 11)),
           ),
         ],
       ),

@@ -26,6 +26,7 @@ import '../widgets/media_context_menu.dart';
 import '../widgets/placeholder_container.dart';
 import '../theme/mono_tokens.dart';
 import '../media/media_server_client.dart';
+import '../theme/surface_tokens.dart';
 
 /// Episode card widget with D-pad long-press support
 class EpisodeCard extends StatefulWidget {
@@ -125,6 +126,7 @@ class _EpisodeCardState extends State<EpisodeCard> with ContextMenuTapMixin<Epis
   Widget _buildContent(BuildContext context, {required bool hideSpoilers}) {
     final episode = _effectiveEpisode(context);
     final shouldBlur = hideSpoilers && episode.shouldHideSpoiler;
+    final thumbnailRadius = SurfaceTokens.of(context).thumbnailRadius;
     final qualityLabels = [...buildMediaQualityLabels(episode), ?buildMediaSizeLabel(episode)];
 
     return Padding(
@@ -171,7 +173,7 @@ class _EpisodeCardState extends State<EpisodeCard> with ContextMenuTapMixin<Epis
                       child: Stack(
                         children: [
                           ClipRRect(
-                            borderRadius: const BorderRadius.all(Radius.circular(6)),
+                            borderRadius: BorderRadius.all(Radius.circular(thumbnailRadius)),
                             child: AspectRatio(
                               aspectRatio: 16 / 9,
                               child: shouldBlur
@@ -188,7 +190,7 @@ class _EpisodeCardState extends State<EpisodeCard> with ContextMenuTapMixin<Epis
                           Positioned.fill(
                             child: Container(
                               decoration: BoxDecoration(
-                                borderRadius: const BorderRadius.all(Radius.circular(6)),
+                                borderRadius: BorderRadius.all(Radius.circular(thumbnailRadius)),
                                 gradient: LinearGradient(
                                   begin: Alignment.topCenter,
                                   end: Alignment.bottomCenter,

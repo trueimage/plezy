@@ -40,6 +40,7 @@ import 'media_context_menu.dart';
 import 'media_card_list_layout.dart';
 import 'backend_badge.dart';
 import 'optimized_media_image.dart';
+import '../theme/surface_tokens.dart';
 
 const _failedPosterUrlCacheLimit = 512;
 final _failedPosterUrls = <String>{};
@@ -615,7 +616,7 @@ class MediaCardState extends State<MediaCard> with ContextMenuTapMixin<MediaCard
     onLongPress: showContextMenuFromTap,
     onSecondaryTapDown: storeTapPosition,
     onSecondaryTap: showContextMenuFromTap,
-    borderRadius: BorderRadius.circular(tokens(context).radiusSm),
+    borderRadius: BorderRadius.circular(SurfaceTokens.posterRadiusOf(context)),
     child: child,
   );
 
@@ -1076,12 +1077,12 @@ bool _isArtist(Object item) => item is MediaItem && item.kind == MediaKind.artis
 /// rounded rect.
 Widget _clipPosterImage(BuildContext context, Object item, Widget image) {
   if (_isArtist(item)) return ClipOval(child: image);
-  return ClipRRect(borderRadius: BorderRadius.circular(tokens(context).radiusSm), child: image);
+  return ClipRRect(borderRadius: BorderRadius.circular(SurfaceTokens.posterRadiusOf(context)), child: image);
 }
 
 /// Focus border radius matching [_clipPosterImage]'s clip shape.
 double _posterFocusRadius(BuildContext context, Object item) =>
-    _isArtist(item) ? _circularFocusRadius : tokens(context).radiusSm;
+    _isArtist(item) ? _circularFocusRadius : SurfaceTokens.posterRadiusOf(context);
 
 /// Watched/progress overlays are suppressed for artists: a corner checkmark
 /// sits outside the circular artwork and play-state on an artist is noise.
@@ -1443,6 +1444,7 @@ class _CatalogBadges extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surfaces = SurfaceTokens.of(context);
     return Positioned(
       key: const Key('catalog-badges'),
       top: 6,
@@ -1455,8 +1457,8 @@ class _CatalogBadges extends StatelessWidget {
             if (index > 0) const SizedBox(height: 3),
             DecoratedBox(
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.76),
-                borderRadius: BorderRadius.circular(4),
+                color: surfaces.labelBadgeColor,
+                borderRadius: BorderRadius.circular(surfaces.labelBadgeRadius),
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),

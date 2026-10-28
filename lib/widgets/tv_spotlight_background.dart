@@ -21,6 +21,7 @@ import 'settings_builder.dart';
 import 'media_rating_badge.dart';
 import 'optimized_media_image.dart' show ClearLogoImage, blurArtwork;
 import 'rasterized_gradient.dart';
+import '../theme/surface_tokens.dart';
 
 class TvSpotlightBackground extends StatelessWidget {
   final MediaItem? item;
@@ -91,14 +92,11 @@ class TvSpotlightBackground extends StatelessWidget {
             RepaintBoundary(
               child: cornerBackdrop ? _buildCornerBackdrop(backdropSize, backdrop) : blurArtwork(backdrop),
             ),
-            _buildHorizontalScrim(bgColor),
+            _buildHorizontalScrim(context, bgColor),
             RasterizedGradient(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.black.withValues(alpha: 0.45), Colors.transparent, bgColor.withValues(alpha: 0.96)],
-                stops: const [0.0, 0.38, 1.0],
-              ),
+              gradient: SurfaceTokens.of(
+                context,
+              ).spotlightScrim.gradient(bgColor, begin: Alignment.topCenter, end: Alignment.bottomCenter),
             ),
             if (media != null && showInfo)
               Positioned(
@@ -174,14 +172,11 @@ class TvSpotlightBackground extends StatelessWidget {
     );
   }
 
-  Widget _buildHorizontalScrim(Color bgColor) {
+  Widget _buildHorizontalScrim(BuildContext context, Color bgColor) {
     return RasterizedGradient(
-      gradient: LinearGradient(
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-        colors: [bgColor.withValues(alpha: 0.86), bgColor.withValues(alpha: 0.32), Colors.transparent],
-        stops: const [0.0, 0.56, 1.0],
-      ),
+      gradient: SurfaceTokens.of(
+        context,
+      ).spotlightSideScrim.gradient(bgColor, begin: Alignment.centerLeft, end: Alignment.centerRight),
     );
   }
 

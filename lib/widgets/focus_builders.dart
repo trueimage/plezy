@@ -3,6 +3,7 @@ import '../focus/focus_chrome.dart';
 import '../focus/focus_theme.dart';
 import '../focus/input_mode_tracker.dart';
 import 'clickable_cursor.dart';
+import '../theme/surface_tokens.dart';
 
 /// Shared builders for focusable widgets to reduce code duplication.
 ///
@@ -32,10 +33,11 @@ class FocusBuilders {
     bool? selected,
     required EdgeInsetsGeometry padding,
     required Color backgroundColor,
-    double borderRadius = 20,
+    double? borderRadius,
     required Widget child,
   }) {
     final duration = FocusTheme.getAnimationDuration(context);
+    final radius = borderRadius ?? SurfaceTokens.of(context).chipRadius;
 
     return Focus(
       focusNode: focusNode,
@@ -53,7 +55,7 @@ class FocusBuilders {
               duration: duration,
               curve: Curves.easeOutCubic,
               padding: padding,
-              decoration: BoxDecoration(color: backgroundColor, borderRadius: BorderRadius.circular(borderRadius)),
+              decoration: BoxDecoration(color: backgroundColor, borderRadius: BorderRadius.circular(radius)),
               child: child,
             ),
           ),
