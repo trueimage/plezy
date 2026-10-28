@@ -16,6 +16,7 @@ import 'package:plezy/theme/mono_theme.dart';
 import 'package:plezy/theme/nocturne_theme.dart';
 import 'package:plezy/theme/plezy_theme_spec.dart';
 import 'package:plezy/utils/platform_detector.dart';
+import 'package:plezy/utils/wall_clock.dart';
 import 'package:plezy/widgets/system_clock.dart';
 import 'package:plezy/widgets/video_controls/widgets/finish_time_builder.dart';
 import 'package:provider/provider.dart';
@@ -243,6 +244,10 @@ Future<void> setUpGoldenCase(WidgetTester tester, GoldenCase golden) async {
   // Zero-padded HH:mm in tabular Roboto digits: wall-clock text then has the
   // same width at any time of day, so its mask never moves the layout.
   tester.platformDispatcher.alwaysUse24HourFormatTestValue = true;
+  // A pinned wall clock: the masked text, and so the mask's edge, is the same
+  // on every run, whatever the font's digits.
+  debugWallClock = () => DateTime(2026, 10, 28, 7, 19);
+  addTearDown(() => debugWallClock = DateTime.now);
   addTearDown(tester.platformDispatcher.clearAlwaysUse24HourTestValue);
 
   // Desktop player chrome asks the window plugin about the window state.

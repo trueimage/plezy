@@ -98,9 +98,11 @@ After updating, look at every changed image (`git status test/goldens/goldens`) 
   else about the theme is the production `monoTheme`, so size, weight, spacing and colour changes all show.
 - **No artwork.** The fixtures in `golden_fixtures.dart` have no image paths, so cards and heroes show their
   placeholders instead of depending on image decoding.
-- **Wall-clock time.** The player's clock and "ends at" estimate read `DateTime.now()`, which the test clock does
-  not control. The harness renders time in 24-hour format, which has a fixed width, and paints that text over in
-  magenta (`0xFFFF00FF`) in the captured image.
+- **Wall-clock time.** The clock and the player's "ends at" estimate read the time through `wallClockNow()`
+  (`lib/utils/wall_clock.dart`), which the harness pins to 07:19 on 28 October 2026 in 24-hour format. The text is
+  still painted over in magenta (`0xFFFF00FF`) in the captured image. Pinning the clock keeps the mask itself
+  steady: Roboto and Manrope draw digits at different widths, so masking a live clock moved the mask's edge with
+  the time of day.
 - **Animations** are settled, or stepped by fixed durations of the fake test clock.
 
 ## Adding a screen
