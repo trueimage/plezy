@@ -29,14 +29,9 @@ class PlezyLayout extends ThemeExtension<PlezyLayout> {
     this.railOpenWidth = 380,
     this.safeX = 80,
     this.safeY = 48,
-    this.heroTextHeight = 0.52,
     this.backdropHeight = 0.62,
     this.rowFocusLine = 592,
     this.logoBox = const Size(520, 128),
-    this.posterWidth = 220,
-    this.wideWidth = 400,
-    this.cardGap = 24,
-    this.rowGap = 40,
     this.jumpRailWidth = 44,
   });
 
@@ -69,9 +64,7 @@ class PlezyLayout extends ThemeExtension<PlezyLayout> {
   final double safeX;
   final double safeY;
 
-  /// Share of the screen height the spotlight text column and the backdrop
-  /// take.
-  final double heroTextHeight;
+  /// Share of the screen height the backdrop takes.
   final double backdropHeight;
 
   /// Top of the first row under the home spotlight at 1080p.
@@ -80,10 +73,6 @@ class PlezyLayout extends ThemeExtension<PlezyLayout> {
   /// The box a clear logo is fitted into, reserved whether or not it loads.
   final Size logoBox;
 
-  final double posterWidth;
-  final double wideWidth;
-  final double cardGap;
-  final double rowGap;
   final double jumpRailWidth;
 
   @override
@@ -93,14 +82,9 @@ class PlezyLayout extends ThemeExtension<PlezyLayout> {
     double? railOpenWidth,
     double? safeX,
     double? safeY,
-    double? heroTextHeight,
     double? backdropHeight,
     double? rowFocusLine,
     Size? logoBox,
-    double? posterWidth,
-    double? wideWidth,
-    double? cardGap,
-    double? rowGap,
     double? jumpRailWidth,
   }) => PlezyLayout(
     variant: variant ?? this.variant,
@@ -108,14 +92,9 @@ class PlezyLayout extends ThemeExtension<PlezyLayout> {
     railOpenWidth: railOpenWidth ?? this.railOpenWidth,
     safeX: safeX ?? this.safeX,
     safeY: safeY ?? this.safeY,
-    heroTextHeight: heroTextHeight ?? this.heroTextHeight,
     backdropHeight: backdropHeight ?? this.backdropHeight,
     rowFocusLine: rowFocusLine ?? this.rowFocusLine,
     logoBox: logoBox ?? this.logoBox,
-    posterWidth: posterWidth ?? this.posterWidth,
-    wideWidth: wideWidth ?? this.wideWidth,
-    cardGap: cardGap ?? this.cardGap,
-    rowGap: rowGap ?? this.rowGap,
     jumpRailWidth: jumpRailWidth ?? this.jumpRailWidth,
   );
 
@@ -131,14 +110,9 @@ class PlezyLayout extends ThemeExtension<PlezyLayout> {
       other.railOpenWidth == railOpenWidth &&
       other.safeX == safeX &&
       other.safeY == safeY &&
-      other.heroTextHeight == heroTextHeight &&
       other.backdropHeight == backdropHeight &&
       other.rowFocusLine == rowFocusLine &&
       other.logoBox == logoBox &&
-      other.posterWidth == posterWidth &&
-      other.wideWidth == wideWidth &&
-      other.cardGap == cardGap &&
-      other.rowGap == rowGap &&
       other.jumpRailWidth == jumpRailWidth;
 
   @override
@@ -148,14 +122,9 @@ class PlezyLayout extends ThemeExtension<PlezyLayout> {
     railOpenWidth,
     safeX,
     safeY,
-    heroTextHeight,
     backdropHeight,
     rowFocusLine,
     logoBox,
-    posterWidth,
-    wideWidth,
-    cardGap,
-    rowGap,
     jumpRailWidth,
   );
 }

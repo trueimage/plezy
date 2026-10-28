@@ -162,6 +162,32 @@ void main() {
     }
   }
 
+  testWidgets('reveals season chips sideways and when returning from rows', (tester) async {
+    await pumpList(tester, seasons: [for (var season = 1; season <= 30; season++) _season(season, 1)]);
+    listKey.currentState!.requestFocus();
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await tester.pumpAndSettle();
+    for (var i = 0; i < 29; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+    }
+    expect(focusedLabel(), 'nocturne_season_29');
+    final chip = find.text('Season 30', findRichText: true);
+    final viewport = find.byType(SingleChildScrollView);
+    expect(tester.getRect(chip).left, greaterThanOrEqualTo(tester.getRect(viewport).left));
+    expect(tester.getRect(chip).right, lessThanOrEqualTo(tester.getRect(viewport).right));
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await tester.pumpAndSettle();
+    expect(focusedLabel(), 'nocturne_season_0');
+    expect(
+      tester.getRect(find.text('Season 1', findRichText: true)).left,
+      greaterThanOrEqualTo(tester.getRect(viewport).left),
+    );
+  });
+
   testWidgets('shows loading while an episode page is pending', (tester) async {
     await pumpList(tester, seasons: [_season(1, 0)], trailing: TvRailTrailing.loading);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);

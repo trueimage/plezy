@@ -454,6 +454,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     final backResult = handleBackKeyAction(event, _navigateToSidebar);
     if (backResult != KeyEventResult.ignored) return backResult;
 
+    final isStatic = PlezyLayout.isNocturne(context);
     return dpadKeyHandler(
       onDown: () {
         final keys = _allHubKeys;
@@ -461,19 +462,19 @@ class _DiscoverScreenState extends State<DiscoverScreen>
       },
       onUp: _focusTopActions,
       onLeft: () {
-        if (_heroIndex.value > 0) {
+        if (!isStatic && _heroIndex.value > 0) {
           _heroController.previousPage(duration: tokens(context).slow, curve: Curves.easeInOut);
         } else {
           _navigateToSidebar();
         }
       },
       onRight: () {
-        if (_heroIndex.value < _onDeck.length - 1) {
+        if (!isStatic && _heroIndex.value < _onDeck.length - 1) {
           _heroController.nextPage(duration: tokens(context).slow, curve: Curves.easeInOut);
         }
       },
       onSelect: () {
-        final heroIndex = _heroIndex.value;
+        final heroIndex = isStatic ? 0 : _heroIndex.value;
         if (_onDeck.isNotEmpty && heroIndex < _onDeck.length) {
           navigateToMediaItem(context, _onDeck[heroIndex], playDirectly: true);
         }

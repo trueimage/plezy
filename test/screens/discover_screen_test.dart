@@ -40,6 +40,8 @@ import 'package:plezy/services/multi_server_manager.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/services/storage_service.dart';
 import 'package:plezy/theme/mono_theme.dart';
+import 'package:plezy/theme/nocturne_theme.dart';
+import 'package:plezy/widgets/nocturne/nocturne_home.dart';
 import 'package:plezy/utils/layout_constants.dart';
 import 'package:plezy/utils/platform_detector.dart';
 import 'package:plezy/watch_together/watch_together.dart';
@@ -661,6 +663,8 @@ void main() {
       await db.close();
     });
 
+    final theme = ValueNotifier(monoTheme(MonoPalette.dark));
+    addTearDown(theme.dispose);
     await tester.pumpWidget(
       TranslationProvider(
         child: MultiProvider(
@@ -674,16 +678,19 @@ void main() {
             ChangeNotifierProvider<DiscoverProvider>.value(value: discoverProvider),
           ],
           child: InputModeTracker(
-            child: MaterialApp(
-              theme: monoTheme(MonoPalette.dark),
-              home: MainScreenFocusScope(
-                focusSidebar: () {},
-                sideNavigationWidth: SideNavigationRailState.expandedWidth,
-                reservedSideNavigationWidth: SideNavigationRailState.tvCollapsedWidth,
-                foregroundLeft: 0,
-                foregroundWidth: 1280,
-                viewportWidth: 1280,
-                child: const DiscoverScreen(),
+            child: ValueListenableBuilder<ThemeData>(
+              valueListenable: theme,
+              builder: (context, theme, _) => MaterialApp(
+                theme: theme,
+                home: MainScreenFocusScope(
+                  focusSidebar: () {},
+                  sideNavigationWidth: SideNavigationRailState.expandedWidth,
+                  reservedSideNavigationWidth: SideNavigationRailState.tvCollapsedWidth,
+                  foregroundLeft: 0,
+                  foregroundWidth: 1280,
+                  viewportWidth: 1280,
+                  child: const DiscoverScreen(),
+                ),
               ),
             ),
           ),
@@ -732,6 +739,26 @@ void main() {
       expect(fade.colors[2], scaffoldBg, reason: 'fade reaches full bg at 94%');
       expect(fade.colors[3], scaffoldBg);
     }
+
+    final carousel = tester.widget<PageView>(find.byType(PageView));
+    carousel.controller!.jumpToPage(1);
+    await tester.pump();
+    theme.value = monoThemeFromSpec(NocturneTheme.spec());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(PageView), findsNothing);
+    final spotlight = find.byType(NocturneHomeHero);
+    expect(tester.widget<NocturneHomeHero>(spotlight).item.id, onDeck.first.id);
+    final heroFocus = tester.widget<Focus>(find.ancestor(of: spotlight, matching: find.byType(Focus)).first);
+    heroFocus.focusNode!.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    expect(tester.widget<NocturneHomeHero>(spotlight).item.id, onDeck.first.id);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pump();
+    expect(tester.takeException(), isNull);
 
     // Dispose the screen so the hero's periodic timers are cancelled before
     // the binding's pending-timer check.

@@ -489,12 +489,9 @@ enum NocturneButtonStyle {
 
   /// A tonal pill with a hairline.
   secondary,
-
-  /// A round icon-only control.
-  circle,
 }
 
-/// A Nocturne action: pill or circle, inverted to a light fill with dark
+/// A Nocturne action: pill, inverted to a light fill with dark
 /// content when D-pad focused, plus the theme's ring and glow; on the
 /// reduced tier it snaps and drops the glow.
 class NocturneButton extends StatelessWidget {
@@ -563,7 +560,7 @@ class NocturneButton extends StatelessWidget {
 }
 
 /// How a [NocturneButton] looks, for controls that own their focus elsewhere
-/// (the detail page's action row): the pill or circle, inverted when
+/// (the detail page's action row): the pill, inverted when
 /// [focused].
 class NocturneButtonFace extends StatelessWidget {
   const NocturneButtonFace({
@@ -597,20 +594,6 @@ class NocturneButtonFace extends StatelessWidget {
     final detailStyle = TextStyle(fontSize: m.caption, fontWeight: FontWeight.w600, height: 1.2);
     final light = t.text;
     final dark = t.bg;
-
-    if (style == NocturneButtonStyle.circle) {
-      return Container(
-        width: height,
-        height: height,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: focused ? light : surfaces.overlaySurface ?? t.surface,
-          border: Border.all(color: focused ? light : t.outline.withValues(alpha: 0.24)),
-        ),
-        child: AppIcon(icon ?? Symbols.more_horiz_rounded, fill: 1, size: iconSize, color: focused ? dark : light),
-      );
-    }
 
     final padX = m.pick(tv: 34, desktop: 18, phone: 18);
     final gap = m.pick(tv: 12, desktop: 8, phone: 8);

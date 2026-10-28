@@ -350,12 +350,11 @@ class NocturneEpisodeListState extends State<NocturneEpisodeList> {
                   ),
                 );
               }
-              final episode = context.withFreshWatchState(items[index]);
               return Padding(
                 padding: EdgeInsets.only(bottom: m.pick(tv: 12, desktop: 8, phone: 8)),
                 child: _EpisodeRow(
-                  episode: episode,
-                  client: widget.clientFor(episode),
+                  episode: items[index],
+                  client: widget.clientFor(items[index]),
                   focusNode: _episodeNodes[index],
                   autofocus: false,
                   hideSpoilers: widget.hideSpoilers,
@@ -397,6 +396,14 @@ class _SeasonChip extends StatelessWidget {
     return Focus(
       focusNode: focusNode,
       onKeyEvent: (_, event) => onKey(event),
+      onFocusChange: (focused) {
+        if (focused) {
+          Scrollable.ensureVisible(
+            context,
+            duration: DevicePerformance.reducedDuration(const Duration(milliseconds: 160)),
+          );
+        }
+      },
       child: ListenableBuilder(
         listenable: focusNode,
         builder: (context, _) {
@@ -475,6 +482,7 @@ class _EpisodeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final episode = context.withFreshWatchState(this.episode);
     final m = NocturneMetrics.of(context);
     final tk = tokens(context);
     final surfaces = SurfaceTokens.of(context);

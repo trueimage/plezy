@@ -33,15 +33,6 @@ class PlezyThemeSpec {
   /// theme then does not carry at all.
   final PlezyLayout? layout;
 
-  PlezyThemeSpec copyWith({MonoPalette? palette}) => PlezyThemeSpec(
-    palette ?? this.palette,
-    focus: focus,
-    surfaces: surfaces,
-    type: type,
-    metrics: metrics,
-    layout: layout,
-  );
-
   @override
   bool operator ==(Object other) =>
       other is PlezyThemeSpec &&
