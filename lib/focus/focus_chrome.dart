@@ -47,6 +47,18 @@ Widget buildFocusChrome(
             color: focusColor,
           );
     card = AnimatedContainer(duration: duration, curve: Curves.easeOutCubic, decoration: decoration, child: child);
+    final focus = FocusTheme.of(context);
+    if (!useBackgroundFocus && focus.haloWidth > 0) {
+      card = DecoratedBox(
+        decoration: FocusTheme.focusHaloDecoration(
+          context,
+          isFocused: showFocus,
+          borderRadius: borderRadius,
+          radii: borderRadii,
+        ),
+        child: card,
+      );
+    }
   }
 
   // Glow (full-bleed cards) renders in an overlay above siblings so it stays

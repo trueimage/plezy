@@ -33,6 +33,9 @@ import '../services/fullscreen_state_manager.dart';
 import '../theme/mono_tokens.dart';
 import '../widgets/backend_badge.dart';
 import '../i18n/strings.g.dart';
+import '../focus/focus_theme.dart';
+import '../focus/focus_tokens.dart';
+import '../theme/plezy_layout.dart';
 import '../theme/type_scale.dart';
 
 enum _LibraryNavSection { visible, hidden }
@@ -125,8 +128,8 @@ class NavigationRailItem extends StatelessWidget {
   final double horizontalPadding;
 
   /// Fixed content width of the expanded layout, so the collapse morph and
-  /// the rail width animation stay in lockstep.
-  final double expandedContentWidth;
+  /// the rail width animation stay in lockstep; null fits the open rail.
+  final double? expandedContentWidth;
 
   /// Expanded row height: fixed for collapsible items, a minimum for
   /// expanded-only items (whose labels may add a second line).
@@ -159,7 +162,7 @@ class NavigationRailItem extends StatelessWidget {
     this.autofocus = false,
     this.iconSize = 22,
     this.horizontalPadding = 17,
-    this.expandedContentWidth = SideNavigationRailState.expandedWidth - 24,
+    this.expandedContentWidth,
     this.expandedHeight = 48,
     this.suppressSelectedBackground = false,
     this.focusAlpha = 0.12,
@@ -167,16 +170,18 @@ class NavigationRailItem extends StatelessWidget {
     this.onNavigateRight,
   });
 
-  Color? _indicatorColorForLayout(MonoTokens t, {required bool focused, required bool collapsedLayout}) {
+  Color? _indicatorColorForLayout(MonoTokens t, {required _Focus focused, required bool collapsedLayout}) {
     // The collapsed TV rail is a transparent overlay strip; a persistent
     // active pill over artwork is noise there, so it shows focus only.
     final showSelected = isSelected && !suppressSelectedBackground && !(collapsedLayout && PlatformDetector.isTV());
-    if (focused) return t.text.withValues(alpha: showSelected ? selectedFocusAlpha : focusAlpha);
+    // Inverted list focus (Nocturne): the focused row is a solid light fill.
+    if (focused == _Focus.inverted) return t.text;
+    if (focused == _Focus.on) return t.text.withValues(alpha: showSelected ? selectedFocusAlpha : focusAlpha);
     if (showSelected) return t.text.withValues(alpha: 0.1);
     return null;
   }
 
-  Color? _indicatorColor(MonoTokens t, {required bool focused, required double expansion}) {
+  Color? _indicatorColor(MonoTokens t, {required _Focus focused, required double expansion}) {
     return Color.lerp(
       _indicatorColorForLayout(t, focused: focused, collapsedLayout: true),
       _indicatorColorForLayout(t, focused: focused, collapsedLayout: false),
@@ -184,21 +189,24 @@ class NavigationRailItem extends StatelessWidget {
     );
   }
 
-  Widget _leadingIcon(MonoTokens t) =>
+  Widget _leadingIcon(MonoTokens t, _Focus focused) =>
       iconWidget ??
       AppIcon(
         isSelected && selectedIcon != null ? selectedIcon! : icon,
         fill: 1,
         size: iconSize,
-        color: isSelected ? t.accent : t.textMuted,
+        color: focused == _Focus.inverted ? t.bg : (isSelected ? t.accent : t.textMuted),
       );
+
+  double _contentWidth(BuildContext context) =>
+      expandedContentWidth ?? SideNavigationRailState.expandedWidthForContext(context) - 24;
 
   static double _collapsedItemWidth(BuildContext context) =>
       SideNavigationRailState.collapsedWidthForContext(context) -
       2 * SideNavigationRailState.horizontalPaddingForContext(context, isCollapsed: true);
 
   /// M3E collapsed destination: an icon-only pill indicator.
-  Widget _buildCollapsedLayout(BuildContext context, MonoTokens t, {required bool focused}) {
+  Widget _buildCollapsedLayout(BuildContext context, MonoTokens t, {required _Focus focused}) {
     final width = _collapsedItemWidth(context);
     return SizedBox(
       width: width,
@@ -214,7 +222,7 @@ class NavigationRailItem extends StatelessWidget {
               color: _indicatorColor(t, focused: focused, expansion: 0),
               borderRadius: BorderRadius.circular(MonoTokens.radiusFull),
             ),
-            child: _leadingIcon(t),
+            child: _leadingIcon(t, focused),
           ),
         ),
       ),
@@ -222,9 +230,16 @@ class NavigationRailItem extends StatelessWidget {
   }
 
   /// M3E expanded destination: full-width stadium indicator behind the row.
-  Widget _labelAtOpacity(BuildContext context, double opacity) {
+  Widget _labelAtOpacity(BuildContext context, double opacity, _Focus focused) {
     final builder = labelBuilder;
     if (builder != null) return builder(opacity);
+    if (focused == _Focus.inverted && label is Text) {
+      final bg = tokens(context).bg;
+      return DefaultTextStyle.merge(
+        style: TextStyle(color: bg.withValues(alpha: opacity)),
+        child: label,
+      );
+    }
 
     final textStyle = label is Text ? (label as Text).style : null;
     final inheritsTextColor =
@@ -253,20 +268,26 @@ class NavigationRailItem extends StatelessWidget {
   Widget _buildExpandedContent(
     BuildContext context,
     MonoTokens t, {
+    required _Focus focused,
     required double labelOpacity,
     required bool showLeading,
   }) {
     return Row(
       children: [
-        if (showLeading) _leadingIcon(t) else SizedBox(width: iconSize, height: iconSize),
+        if (showLeading) _leadingIcon(t, focused) else SizedBox(width: iconSize, height: iconSize),
         const SizedBox(width: 11),
-        Expanded(child: _labelAtOpacity(context, labelOpacity)),
+        Expanded(child: _labelAtOpacity(context, labelOpacity, focused)),
         ?_trailingAtOpacity(labelOpacity),
       ],
     );
   }
 
-  Widget _buildExpandedLayout(BuildContext context, MonoTokens t, {required bool focused, required bool fixedHeight}) {
+  Widget _buildExpandedLayout(
+    BuildContext context,
+    MonoTokens t, {
+    required _Focus focused,
+    required bool fixedHeight,
+  }) {
     return Container(
       constraints: fixedHeight ? null : BoxConstraints(minHeight: expandedHeight),
       alignment: .centerLeft,
@@ -275,18 +296,23 @@ class NavigationRailItem extends StatelessWidget {
         color: _indicatorColor(t, focused: focused, expansion: 1),
         borderRadius: BorderRadius.circular(MonoTokens.radiusFull),
       ),
-      child: _buildExpandedContent(context, t, labelOpacity: 1, showLeading: true),
+      child: _buildExpandedContent(context, t, focused: focused, labelOpacity: 1, showLeading: true),
     );
   }
 
   /// At the endpoints only the active layout exists in the tree. Mid-morph a
   /// single icon moves with the pill geometry while label and indicator color
   /// alpha provide the crossfade without subtree opacity layers.
-  Widget _buildMorphingLayouts(BuildContext context, MonoTokens t, {required bool focused, required double expansion}) {
+  Widget _buildMorphingLayouts(
+    BuildContext context,
+    MonoTokens t, {
+    required _Focus focused,
+    required double expansion,
+  }) {
     if (expansion <= 0) return _buildCollapsedLayout(context, t, focused: focused);
     if (expansion >= 1) {
       return SizedBox(
-        width: expandedContentWidth,
+        width: _contentWidth(context),
         height: expandedHeight,
         child: _buildExpandedLayout(context, t, focused: focused, fixedHeight: true),
       );
@@ -301,7 +327,7 @@ class NavigationRailItem extends StatelessWidget {
     final iconTop = lerpDouble((collapsedHeight - iconSize) / 2, (expandedHeight - iconSize) / 2, expansion);
 
     return SizedBox(
-      width: lerpDouble(collapsedWidth, expandedContentWidth, expansion),
+      width: lerpDouble(collapsedWidth, _contentWidth(context), expansion),
       height: lerpDouble(collapsedHeight, expandedHeight, expansion),
       child: Stack(
         children: [
@@ -309,7 +335,7 @@ class NavigationRailItem extends StatelessWidget {
             left: indicatorLeft,
             top: indicatorTop,
             child: Container(
-              width: lerpDouble(collapsedPillWidth, expandedContentWidth, expansion),
+              width: lerpDouble(collapsedPillWidth, _contentWidth(context), expansion),
               height: lerpDouble(collapsedIndicatorHeight, expandedHeight, expansion),
               decoration: BoxDecoration(
                 color: _indicatorColor(t, focused: focused, expansion: expansion),
@@ -321,11 +347,11 @@ class NavigationRailItem extends StatelessWidget {
             left: 0,
             top: 0,
             child: SizedBox(
-              width: expandedContentWidth,
+              width: _contentWidth(context),
               height: expandedHeight,
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                child: _buildExpandedContent(context, t, labelOpacity: expansion, showLeading: false),
+                child: _buildExpandedContent(context, t, focused: focused, labelOpacity: expansion, showLeading: false),
               ),
             ),
           ),
@@ -335,7 +361,7 @@ class NavigationRailItem extends StatelessWidget {
             child: SizedBox(
               width: iconSize,
               height: iconSize,
-              child: Center(child: _leadingIcon(t)),
+              child: Center(child: _leadingIcon(t, focused)),
             ),
           ),
         ],
@@ -350,10 +376,15 @@ class NavigationRailItem extends StatelessWidget {
     return ListenableBuilder(
       listenable: focusNode,
       builder: (context, _) {
-        final focused = focusNode.hasFocus && InputModeTracker.isKeyboardMode(context);
-        final content = collapsedLabel == null
+        final hasFocus = focusNode.hasFocus && InputModeTracker.isKeyboardMode(context);
+        final focused = !hasFocus
+            ? _Focus.off
+            : FocusTheme.of(context).listStyle == FocusListStyle.inverted
+            ? _Focus.inverted
+            : _Focus.on;
+        Widget content = collapsedLabel == null
             ? SizedBox(
-                width: expandedContentWidth,
+                width: _contentWidth(context),
                 child: _buildExpandedLayout(context, t, focused: focused, fixedHeight: false),
               )
             : TweenAnimationBuilder<double>(
@@ -363,6 +394,23 @@ class NavigationRailItem extends StatelessWidget {
                 builder: (context, expansion, _) =>
                     _buildMorphingLayouts(context, t, focused: focused, expansion: expansion),
               );
+        // Nocturne keeps a short accent mark on the active screen's item.
+        if (isSelected && !suppressSelectedBackground && PlezyLayout.isNocturne(context)) {
+          content = Stack(
+            alignment: AlignmentDirectional.centerStart,
+            children: [
+              content,
+              PositionedDirectional(
+                start: 0,
+                child: Container(
+                  width: 4,
+                  height: 24,
+                  decoration: BoxDecoration(color: t.accent, borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+            ],
+          );
+        }
         return Focus(
           focusNode: focusNode,
           autofocus: autofocus,
@@ -459,7 +507,18 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
   static Duration get expandDuration => DevicePerformance.reducedDuration(const Duration(milliseconds: 250));
   static const Curve expandCurve = Curves.easeInOutCubicEmphasized;
 
-  static double collapsedWidthForContext(BuildContext _) => PlatformDetector.isTV() ? tvCollapsedWidth : collapsedWidth;
+  static double collapsedWidthForContext(BuildContext context) {
+    if (!PlatformDetector.isTV()) return collapsedWidth;
+    return overlaysContent(context) ? PlezyLayout.of(context).railWidth : tvCollapsedWidth;
+  }
+
+  /// Width of the open rail: Nocturne's TV rail opens wider, as an overlay.
+  static double expandedWidthForContext(BuildContext context) =>
+      overlaysContent(context) ? PlezyLayout.of(context).railOpenWidth : expandedWidth;
+
+  /// Whether the rail opens over the content instead of pushing it aside: the
+  /// Nocturne layout's TV icon rail, where content never reflows.
+  static bool overlaysContent(BuildContext context) => PlatformDetector.isTV() && PlezyLayout.isNocturne(context);
 
   /// Edge padding around the item column; collapsed rails center their items
   /// (72px in the 80px desktop strip, 40px in the 48px TV strip).
@@ -880,6 +939,7 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
 
     final isCollapsed = !_shouldExpand;
     final effectiveCollapsedWidth = collapsedWidthForContext(context);
+    final overlay = overlaysContent(context);
     final horizontalPadding = horizontalPaddingForContext(context, isCollapsed: isCollapsed);
     final hasLiveTv = context.watch<MultiServerProvider>().hasLiveTv;
     // Nullable watch: rail tests (and any host without the profile session
@@ -957,7 +1017,7 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
               child: AnimatedContainer(
                 duration: expandDuration,
                 curve: expandCurve,
-                width: isCollapsed ? effectiveCollapsedWidth : expandedWidth,
+                width: isCollapsed ? effectiveCollapsedWidth : expandedWidthForContext(context),
                 clipBehavior: Clip.hardEdge,
                 decoration: const BoxDecoration(),
                 child: Stack(
@@ -969,7 +1029,7 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
                     // platform (#2079).
                     Positioned.fill(
                       child: AnimatedOpacity(
-                        opacity: PlatformDetector.isTV() && !_isFloatingPanel ? 0.0 : 1.0,
+                        opacity: PlatformDetector.isTV() && !_isFloatingPanel && !(overlay && !isCollapsed) ? 0.0 : 1.0,
                         // Shares the width morph's duration/curve: a shorter
                         // fade strands a fully grown, fully transparent panel
                         // over the content part-way through the collapse.
@@ -991,6 +1051,8 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
                                   ),
                             boxShadow: _isFloatingPanel
                                 ? [BoxShadow(color: Colors.black.withValues(alpha: 0.35), blurRadius: 24)]
+                                : overlay && !isCollapsed
+                                ? const [BoxShadow(color: Color(0x8C000000), blurRadius: 32, offset: Offset(0, 24))]
                                 : const [],
                           ),
                         ),
@@ -1494,7 +1556,7 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
                 constrainedAxis: Axis.vertical,
                 clipBehavior: Clip.hardEdge,
                 child: SizedBox(
-                  width: expandedWidth - 24,
+                  width: expandedWidthForContext(context) - 24,
                   child: Padding(
                     padding: .symmetric(vertical: verticalPadding, horizontal: 17),
                     child: Row(
@@ -1565,3 +1627,7 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
     );
   }
 }
+
+/// How a rail item shows keyboard focus: not at all, as a tinted fill, or
+/// inverted (a light fill with dark text and icon).
+enum _Focus { off, on, inverted }

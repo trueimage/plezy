@@ -17,7 +17,7 @@ import 'golden_harness.dart';
 void main() {
   goldenMatrix(
     'hub_section',
-    themes: lightDarkGoldenThemes,
+    themes: screenGoldenThemes,
     body: (tester, golden) => pumpGoldenApp(
       tester,
       golden,

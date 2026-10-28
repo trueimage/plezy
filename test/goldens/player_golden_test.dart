@@ -26,11 +26,11 @@ import 'golden_harness.dart';
 void main() {
   setUpAll(() => initializeDateFormatting('en'));
 
-  goldenMatrix('player_controls', themes: lightDarkGoldenThemes, body: _pumpControls);
+  goldenMatrix('player_controls', themes: screenGoldenThemes, body: _pumpControls);
 
   goldenMatrix(
     'player_loading',
-    themes: lightDarkGoldenThemes,
+    themes: screenGoldenThemes,
     body: (tester, golden) => withMockPlayerChannels(
       methodChannelName: 'com.plezy/mpv_player',
       eventChannelName: 'com.plezy/mpv_player/events',

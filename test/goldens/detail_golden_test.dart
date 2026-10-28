@@ -31,7 +31,7 @@ void main() {
 
   goldenMatrix(
     'episode_list',
-    themes: lightDarkGoldenThemes,
+    themes: screenGoldenThemes,
     body: (tester, golden) async {
       await _pumpDetail(tester, golden, goldenSeason);
       // TV lays a season's episodes out as a card row that is already on
