@@ -138,10 +138,24 @@ jobs:
       - name: Run tests
         run: |
           if [ -d "test" ] && [ "$(find test -name '*_test.dart' | wc -l)" -gt 0 ]; then
-            scripts/run_tests.sh
+            scripts/run_tests.sh --exclude-tags golden
           else
             echo "No tests found, skipping test execution"
           fi
+
+      # test/goldens: the committed images are rendered on Linux x64 with this
+      # job's Flutter, so this is the job that compares them (see test/goldens/README.md).
+      - name: Run golden screenshot tests
+        run: scripts/run_tests.sh --tags golden
+
+      - name: Upload golden failures
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: golden-failures
+          path: test/goldens/failures/
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Install wakelock_plus test dependencies
         working-directory: packages/wakelock_plus
