@@ -9,6 +9,9 @@ import 'package:plezy/services/settings_service.dart' as settings;
 import 'package:plezy/services/supporter/supporter_mode.dart';
 import 'package:plezy/services/supporter/supporter_service.dart';
 import 'package:plezy/theme/mono_theme.dart';
+import 'package:plezy/theme/mono_tokens.dart';
+import 'package:plezy/theme/nocturne_theme.dart';
+import 'package:plezy/theme/plezy_layout.dart';
 import 'package:plezy/utils/platform_detector.dart';
 
 import '../test_helpers/prefs.dart';
@@ -276,6 +279,59 @@ void main() {
       final second = _provider(supporter);
       await Future.delayed(Duration.zero);
       expect(second.themeMode, settings.ThemeMode.forest);
+    });
+
+    group('Nocturne', () {
+      test('is a free built-in, selectable and persisted with its layout', () async {
+        expect(settings.ThemeMode.nocturne.isSupporterPerk, isFalse);
+        final supporter = _supporter(SupporterAvailability.hidden);
+        final first = ThemeProvider(supporter: supporter);
+        await Future.delayed(Duration.zero);
+        await first.setThemeMode(settings.ThemeMode.nocturne);
+        expect(first.themeMode, settings.ThemeMode.nocturne);
+        expect(first.darkTheme.extension<PlezyLayout>()?.variant, LayoutVariant.nocturne);
+        expect(first.darkTheme.extension<MonoTokens>()?.bg, MonoPalette.nocturne.bg);
+        first.dispose();
+
+        BaseSharedPreferencesService.resetForTesting();
+
+        // Locked builds keep it: Nocturne is not a supporter perk.
+        final second = _provider(supporter);
+        await Future.delayed(Duration.zero);
+        expect(second.themeMode, settings.ThemeMode.nocturne);
+        expect(second.darkTheme.extension<PlezyLayout>()?.variant, LayoutVariant.nocturne);
+        final svc = await settings.SettingsService.getInstance();
+        expect(svc.read(settings.SettingsService.layoutVariant), LayoutVariantSetting.auto);
+      });
+
+      test('every other theme keeps the classic layout', () async {
+        for (final mode in settings.ThemeMode.values.where((mode) => mode != settings.ThemeMode.nocturne)) {
+          final spec = ThemeProvider.resolve(mode, _custom, unlocked: true).spec;
+          expect(spec?.layout, isNull, reason: mode.name);
+        }
+      });
+
+      test('True black and the accent repaint Nocturne and persist', () async {
+        final p = _provider();
+        await Future.delayed(Duration.zero);
+        await p.setThemeMode(settings.ThemeMode.nocturne);
+        final svc = await settings.SettingsService.getInstance();
+        await svc.write(settings.SettingsService.nocturneTrueBlack, true);
+        await svc.write(settings.SettingsService.nocturneAccent, NocturneAccent.ivory);
+        await Future.delayed(Duration.zero);
+
+        final tokens = p.darkTheme.extension<MonoTokens>()!;
+        expect(tokens.bg, NocturneTheme.trueBlackBackground);
+        expect(tokens.accent, NocturneAccent.ivory.color);
+        expect(p.nocturneOptions, const NocturneOptions(trueBlack: true, accent: NocturneAccent.ivory));
+        expect(
+          ThemeProvider.resolveStored(svc, unlocked: false).spec,
+          ThemeProvider.specFor(
+            settings.ThemeMode.nocturne,
+            nocturne: const NocturneOptions(trueBlack: true, accent: NocturneAccent.ivory),
+          ),
+        );
+      });
     });
 
     test('safeNotifyListeners no-ops after dispose', () async {

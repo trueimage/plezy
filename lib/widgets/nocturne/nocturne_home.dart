@@ -201,44 +201,50 @@ class NocturneTvHomeState extends State<NocturneTvHome> {
   Widget _spotlight(BuildContext context, MediaItem item) {
     final m = NocturneMetrics.of(context);
     final timeLeft = nocturneTimeLeft(item);
-    return Align(
-      alignment: Alignment.bottomLeft,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          NocturneTitleBlock(
-            item: item,
-            client: widget.resolveClient(item),
-            kicker: nocturneKickerFor(item, widget.hubs),
-            hideSpoilers: widget.hideSpoilers,
-            extraMeta: [?timeLeft],
-          ),
-          SizedBox(height: m.pick(tv: 22, desktop: 16, phone: 12)),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              NocturneButton(
-                focusNode: _primaryAction,
-                style: NocturneButtonStyle.primary,
-                icon: Symbols.play_arrow_rounded,
-                label: item.hasActiveProgress ? t.common.resume : t.common.play,
-                detail: timeLeft,
-                onPressed: () => widget.onPlay(item),
-                onNavigateDown: widget.onNavigateDown,
-                onNavigateUp: widget.onNavigateUp,
-              ),
-              SizedBox(width: m.pick(tv: 16, desktop: 12, phone: 10)),
-              NocturneButton(
-                icon: Symbols.info_rounded,
-                label: t.nocturne.details,
-                onPressed: () => widget.onDetails(item),
-                onNavigateDown: widget.onNavigateDown,
-                onNavigateUp: widget.onNavigateUp,
-              ),
-            ],
-          ),
-        ],
+    // While the band folds, the outgoing spotlight is laid out in the folded
+    // slot; it keeps its own height and is clipped instead of overflowing.
+    return ClipRect(
+      child: OverflowBox(
+        alignment: Alignment.bottomLeft,
+        minHeight: 0,
+        maxHeight: double.infinity,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            NocturneTitleBlock(
+              item: item,
+              client: widget.resolveClient(item),
+              kicker: nocturneKickerFor(item, widget.hubs),
+              hideSpoilers: widget.hideSpoilers,
+              extraMeta: [?timeLeft],
+            ),
+            SizedBox(height: m.pick(tv: 22, desktop: 16, phone: 12)),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                NocturneButton(
+                  focusNode: _primaryAction,
+                  style: NocturneButtonStyle.primary,
+                  icon: Symbols.play_arrow_rounded,
+                  label: item.hasActiveProgress ? t.common.resume : t.common.play,
+                  detail: timeLeft,
+                  onPressed: () => widget.onPlay(item),
+                  onNavigateDown: widget.onNavigateDown,
+                  onNavigateUp: widget.onNavigateUp,
+                ),
+                SizedBox(width: m.pick(tv: 16, desktop: 12, phone: 10)),
+                NocturneButton(
+                  icon: Symbols.info_rounded,
+                  label: t.nocturne.details,
+                  onPressed: () => widget.onDetails(item),
+                  onNavigateDown: widget.onNavigateDown,
+                  onNavigateUp: widget.onNavigateUp,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
