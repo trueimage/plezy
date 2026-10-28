@@ -179,6 +179,95 @@ final List<MediaItem> goldenEpisodes = [
     ),
 ];
 
+/// The home screen's Continue Watching: an episode and a movie in progress,
+/// and an episode that is next up with no progress. Fictional titles only.
+final List<MediaItem> goldenContinueWatching = [
+  testMediaItem(
+    id: 'cw_halcyon',
+    backend: MediaBackend.plex,
+    kind: MediaKind.episode,
+    title: 'Signal Decay',
+    summary:
+        'Forty thousand people live on the last station in the belt. When the resupply ships stop coming, the '
+        'station has to decide what it is willing to become.',
+    index: 4,
+    parentIndex: 2,
+    grandparentTitle: 'Halcyon Station',
+    year: 2024,
+    contentRating: 'TV-14',
+    rating: 8.3,
+    durationMs: 51 * 60000,
+    viewOffsetMs: 28 * 60000,
+    serverId: goldenServerId,
+    serverName: goldenServerName,
+  ),
+  testMediaItem(
+    id: 'cw_lighthouse',
+    backend: MediaBackend.plex,
+    kind: MediaKind.movie,
+    title: 'The Last Lighthouse',
+    summary:
+        'When the mainland goes dark, a retired keeper rows back to the island she swore she would never see '
+        'again, and finds the light already burning.',
+    year: 2024,
+    contentRating: 'PG-13',
+    rating: 7.9,
+    durationMs: 127 * 60000,
+    viewOffsetMs: 55 * 60000,
+    serverId: goldenServerId,
+    serverName: goldenServerName,
+  ),
+  testMediaItem(
+    id: 'cw_blue_hour',
+    backend: MediaBackend.plex,
+    kind: MediaKind.episode,
+    title: 'Slack Water',
+    summary: 'The tide turns twice in one night, and the harbour town learns which of its neighbours it can trust.',
+    index: 7,
+    parentIndex: 1,
+    grandparentTitle: 'Blue Hour',
+    year: 2023,
+    contentRating: 'TV-MA',
+    durationMs: 44 * 60000,
+    serverId: goldenServerId,
+    serverName: goldenServerName,
+  ),
+  testMediaItem(
+    id: 'cw_glass_ocean',
+    backend: MediaBackend.plex,
+    kind: MediaKind.movie,
+    title: 'Glass Ocean',
+    year: 2024,
+    contentRating: 'PG',
+    durationMs: 89 * 60000,
+    viewOffsetMs: 49 * 60000,
+    serverId: goldenServerId,
+    serverName: goldenServerName,
+  ),
+];
+
+/// The home screen's hubs below Continue Watching.
+final List<MediaHub> goldenHomeHubs = [
+  MediaHub(
+    id: 'recently_added_movies',
+    title: 'Recently added',
+    type: 'movie',
+    items: goldenMovies.take(12).toList(),
+    size: 12,
+    serverId: goldenServerId,
+    serverName: goldenServerName,
+  ),
+  MediaHub(
+    id: 'more_from_the_library',
+    title: 'From your library',
+    type: 'movie',
+    items: goldenMovies.skip(12).toList(),
+    size: 12,
+    serverId: goldenServerId,
+    serverName: goldenServerName,
+  ),
+];
+
 /// A server that answers from the fixtures above, at once, with no artwork.
 class GoldenMediaServerClient implements MediaServerClient {
   late final Map<String, List<MediaItem>> _children = {
@@ -222,6 +311,30 @@ class GoldenMediaServerClient implements MediaServerClient {
     String? mediaSourceId,
     String? preferredVersionSignature,
   }) async => null;
+
+  @override
+  Future<List<MediaItem>> fetchContinueWatching({int? count = 20, Set<String> excludedLibraryIds = const {}}) async =>
+      goldenContinueWatching;
+
+  @override
+  Future<List<MediaHub>> fetchGlobalHubs({
+    int limit = defaultHubPreviewLimit,
+    bool includePlaybackHubs = true,
+    HubFetchDiagnostics? diagnostics,
+  }) async => goldenHomeHubs;
+
+  @override
+  Future<List<MediaLibrary>> fetchLibraries() async => goldenLibraries;
+
+  @override
+  Future<List<MediaHub>> fetchLibraryHubs(
+    String libraryId, {
+    required String libraryName,
+    int limit = defaultHubPreviewLimit,
+    bool includePlaybackHubs = true,
+    MediaKind? libraryKind,
+    HubFetchDiagnostics? diagnostics,
+  }) async => const [];
 
   @override
   Future<List<MediaItem>> fetchChildren(String parentId) async => _children[parentId] ?? const [];

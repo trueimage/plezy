@@ -2569,5 +2569,9 @@
     "openAsProfile": "Open as ${name}",
     "copy": "Copy",
     "copied": "Link copied"
+  },
+  "nocturne": {
+    "details": "Details",
+    "nextUp": "Next up"
   }
 }

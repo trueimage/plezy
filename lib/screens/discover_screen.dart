@@ -69,7 +69,9 @@ import '../providers/companion_remote_provider.dart';
 import '../widgets/companion_remote/remote_session_dialog.dart';
 import 'companion_remote/mobile_remote_screen.dart';
 import '../theme/surface_tokens.dart';
+import '../theme/plezy_layout.dart';
 import '../theme/type_scale.dart';
+import '../widgets/nocturne/nocturne_home.dart';
 
 class DiscoverScreen extends StatefulWidget {
   const DiscoverScreen({super.key});
@@ -106,6 +108,10 @@ class _DiscoverScreenState extends State<DiscoverScreen>
   bool _isAutoScrollPaused = false;
   bool _heroFocusPausedAutoScroll = false;
   final TvSpotlightController _spotlight = TvSpotlightController();
+
+  /// The Nocturne layout's TV home, and the row its rail has focused.
+  final _nocturneHomeKey = GlobalKey<NocturneTvHomeState>();
+  final _activeTvHub = ValueNotifier<int>(0);
   bool _isTabVisible = true;
 
   bool _initialLoadComplete = false;
@@ -216,6 +222,17 @@ class _DiscoverScreenState extends State<DiscoverScreen>
   }
 
   void _focusTopActions() {
+    if (!(ModalRoute.of(context)?.isCurrent ?? false)) return;
+    // Nocturne: Up from the first row reaches the spotlight's Resume.
+    final nocturneHome = _nocturneHomeKey.currentState;
+    if (nocturneHome != null) {
+      nocturneHome.focusPrimaryAction();
+      return;
+    }
+    _focusToolbar();
+  }
+
+  void _focusToolbar() {
     if (!(ModalRoute.of(context)?.isCurrent ?? false)) return;
     final actionBar = _actionBarKey.currentState;
     if (actionBar != null) {
@@ -471,6 +488,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     _autoScrollTimer?.cancel();
     _indicatorTimer?.cancel();
     _spotlight.dispose();
+    _activeTvHub.dispose();
     _indicatorProgress.dispose();
     _heroIndex.dispose();
     _heroController.dispose();
@@ -966,7 +984,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
               Builder(
                 builder: (context) {
                   if (_onDeck.isNotEmpty && showHeroSection) {
-                    return _buildHeroSection();
+                    return PlezyLayout.isNocturne(context) ? _buildNocturneHero() : _buildHeroSection();
                   }
                   // Add top padding when hero is not shown
                   return SliverToBoxAdapter(
@@ -1090,6 +1108,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
       showServerName: showServerName,
       iconForHub: (hub, _) => hubIconFor(hub),
       onFocusedItemChanged: _setSpotlightItem,
+      onActiveHubChanged: (_, index) => _activeTvHub.value = index,
       onRefresh: _discover.updateItem,
       onRemoveFromContinueWatching: _discover.refreshContinueWatching,
       isContinueWatchingHub: (hub) => hub.isContinueWatchingHub,
@@ -1125,6 +1144,25 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     final showServerNameOnHubs = svc.read(SettingsService.showServerNameOnHubs);
     final hubsSpanMultipleServers = _hubsSpanMultipleServers();
     final browseHubs = _tvBrowseHubs;
+    final rail = _cachedTvBrowseRail(browseHubs, showServerName: showServerNameOnHubs || hubsSpanMultipleServers);
+
+    if (PlezyLayout.isNocturne(context)) {
+      return NocturneTvHome(
+        key: _nocturneHomeKey,
+        hubs: browseHubs,
+        spotlight: _spotlight,
+        resolveSpotlight: () => _spotlight.resolve(browseHubs),
+        resolveClient: _getMediaClientForItem,
+        activeHubIndex: _activeTvHub,
+        hideSpoilers: hideSpoilers,
+        rows: browseHubs.isEmpty ? const SizedBox.shrink() : rail,
+        onPlay: (item) => navigateToMediaItem(context, item, playDirectly: true),
+        onDetails: (item) => navigateToMediaItem(context, item),
+        onNavigateDown: () => _tvBrowseRailKey.currentState?.requestFocus(),
+        onNavigateUp: _focusToolbar,
+        overlays: _tvHomeOverlays(browseHubs, rail: null),
+      );
+    }
 
     return TvSpotlightScaffold(
       hubs: browseHubs,
@@ -1135,32 +1173,58 @@ class _DiscoverScreenState extends State<DiscoverScreen>
       foreground: Stack(
         fit: StackFit.expand,
         clipBehavior: Clip.none,
-        children: [
-          if (_isLoading || (_areHubsLoading && browseHubs.isEmpty)) const Center(child: CircularProgressIndicator()),
-          if (_errorMessage != null)
-            ErrorStateWidget(
-              message: _errorMessage!,
-              icon: Symbols.error_outline_rounded,
-              onRetry: _discover.load,
-              actionAutofocus: true,
-              actionUseBackgroundFocus: true,
-            ),
-          if (!_isLoading && _errorMessage == null && browseHubs.isEmpty && !_areHubsLoading)
-            EmptyStateWidget(
-              message: t.discover.noContentAvailable,
-              subtitle: t.discover.addMediaToLibraries,
-              icon: Symbols.movie_rounded,
-            ),
-          if (browseHubs.isNotEmpty)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: _cachedTvBrowseRail(browseHubs, showServerName: showServerNameOnHubs || hubsSpanMultipleServers),
-            ),
-          _cachedTvToolbarOverlay(),
-          if (_switchingProfile) const ProfileSwitchingOverlay(),
-        ],
+        children: _tvHomeOverlays(browseHubs, rail: rail),
+      ),
+    );
+  }
+
+  /// The TV home's states and toolbar, around the [rail] when it is given.
+  List<Widget> _tvHomeOverlays(List<MediaHub> browseHubs, {required Widget? rail}) => [
+    if (_isLoading || (_areHubsLoading && browseHubs.isEmpty)) const Center(child: CircularProgressIndicator()),
+    if (_errorMessage != null)
+      ErrorStateWidget(
+        message: _errorMessage!,
+        icon: Symbols.error_outline_rounded,
+        onRetry: _discover.load,
+        actionAutofocus: true,
+        actionUseBackgroundFocus: true,
+      ),
+    if (!_isLoading && _errorMessage == null && browseHubs.isEmpty && !_areHubsLoading)
+      EmptyStateWidget(
+        message: t.discover.noContentAvailable,
+        subtitle: t.discover.addMediaToLibraries,
+        icon: Symbols.movie_rounded,
+      ),
+    if (rail != null && browseHubs.isNotEmpty) Positioned(left: 0, right: 0, bottom: 0, child: rail),
+    _cachedTvToolbarOverlay(),
+    if (_switchingProfile) const ProfileSwitchingOverlay(),
+  ];
+
+  /// Nocturne's still spotlight of the first Continue Watching title.
+  Widget _buildNocturneHero() {
+    final size = MediaQuery.sizeOf(context);
+    final useSideNav = PlatformDetector.shouldUseSideNavigation(context);
+    return SliverToBoxAdapter(
+      child: Focus(
+        focusNode: _heroFocusNode,
+        onKeyEvent: _handleHeroKeyEvent,
+        // A Builder of its own: the fresh watch state selects on its context.
+        child: Builder(
+          builder: (context) {
+            final item = context.withFreshWatchState(_onDeck.first);
+            return NocturneHomeHero(
+              item: item,
+              client: _getMediaClientForItem(item),
+              height: useSideNav
+                  ? math.max(380, size.height * 0.5)
+                  : math.min(460 + MediaQuery.paddingOf(context).top, size.height * 0.62),
+              kicker: _continueWatchingHub.title,
+              hideSpoilers: SettingsService.instance.read(SettingsService.hideSpoilers),
+              onPlay: () => navigateToMediaItem(context, item, playDirectly: true),
+              onDetails: () => navigateToMediaItem(context, item),
+            );
+          },
+        ),
       ),
     );
   }

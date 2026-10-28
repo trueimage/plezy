@@ -95,6 +95,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$services$en services = Translations$services$en.internal(_root);
 	late final Translations$addServer$en addServer = Translations$addServer$en.internal(_root);
 	late final Translations$deepLinks$en deepLinks = Translations$deepLinks$en.internal(_root);
+	late final Translations$nocturne$en nocturne = Translations$nocturne$en.internal(_root);
 }
 
 // Path: app
@@ -6185,6 +6186,21 @@ class Translations$deepLinks$en {
 	String get copied => 'Link copied';
 }
 
+// Path: nocturne
+class Translations$nocturne$en {
+	Translations$nocturne$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Details'
+	String get details => 'Details';
+
+	/// en: 'Next up'
+	String get nextUp => 'Next up';
+}
+
 // Path: appIcon.names
 class Translations$appIcon$names$en {
 	Translations$appIcon$names$en.internal(this._root);
@@ -10460,6 +10476,8 @@ extension on Translations {
 			'deepLinks.openAsProfile' => ({required Object name}) => 'Open as ${name}',
 			'deepLinks.copy' => 'Copy',
 			'deepLinks.copied' => 'Link copied',
+			'nocturne.details' => 'Details',
+			'nocturne.nextUp' => 'Next up',
 			_ => null,
 		};
 	}

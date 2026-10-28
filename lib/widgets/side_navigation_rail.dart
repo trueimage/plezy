@@ -24,6 +24,7 @@ import '../services/music/music_playback_service.dart';
 import '../services/settings_service.dart';
 import '../utils/music_navigation.dart';
 import '../utils/content_utils.dart';
+import '../utils/layout_constants.dart';
 import '../utils/platform_detector.dart';
 import '../utils/scroll_utils.dart';
 import '../utils/library_grouping.dart';
@@ -122,7 +123,7 @@ class NavigationRailItem extends StatelessWidget {
   final VoidCallback onTap;
   final FocusNode focusNode;
   final bool autofocus;
-  final double iconSize;
+  final double? iconSize;
 
   /// Horizontal content padding of the expanded row.
   final double horizontalPadding;
@@ -160,7 +161,7 @@ class NavigationRailItem extends StatelessWidget {
     required this.onTap,
     required this.focusNode,
     this.autofocus = false,
-    this.iconSize = 22,
+    this.iconSize,
     this.horizontalPadding = 17,
     this.expandedContentWidth,
     this.expandedHeight = 48,
@@ -189,14 +190,33 @@ class NavigationRailItem extends StatelessWidget {
     );
   }
 
-  Widget _leadingIcon(MonoTokens t, _Focus focused) =>
+  Widget _leadingIcon(BuildContext context, MonoTokens t, _Focus focused) =>
       iconWidget ??
       AppIcon(
         isSelected && selectedIcon != null ? selectedIcon! : icon,
         fill: 1,
-        size: iconSize,
+        size: _iconSize(context),
         color: focused == _Focus.inverted ? t.bg : (isSelected ? t.accent : t.textMuted),
       );
+
+  /// Nocturne's TV icon rail draws larger icons on taller rows.
+  static double _scaleFor(BuildContext context) =>
+      SideNavigationRailState.overlaysContent(context) ? TvLayoutConstants.scaleOf(context) : 0;
+
+  double _iconSize(BuildContext context) {
+    final nocturne = _scaleFor(context);
+    return iconSize ?? (nocturne > 0 ? 32 * nocturne : 22);
+  }
+
+  static double _itemHeight(BuildContext context) {
+    final nocturne = _scaleFor(context);
+    return nocturne > 0 ? 68 * nocturne : collapsedItemHeight;
+  }
+
+  static double _indicatorHeight(BuildContext context) {
+    final nocturne = _scaleFor(context);
+    return nocturne > 0 ? 56 * nocturne : collapsedIndicatorHeight;
+  }
 
   double _contentWidth(BuildContext context) =>
       expandedContentWidth ?? SideNavigationRailState.expandedWidthForContext(context) - 24;
@@ -210,19 +230,19 @@ class NavigationRailItem extends StatelessWidget {
     final width = _collapsedItemWidth(context);
     return SizedBox(
       width: width,
-      height: collapsedItemHeight,
+      height: _itemHeight(context),
       child: Center(
         child: Semantics(
           label: collapsedLabel,
           child: Container(
             width: width < collapsedIndicatorWidth ? width : collapsedIndicatorWidth,
-            height: collapsedIndicatorHeight,
+            height: _indicatorHeight(context),
             alignment: .center,
             decoration: BoxDecoration(
               color: _indicatorColor(t, focused: focused, expansion: 0),
               borderRadius: BorderRadius.circular(MonoTokens.radiusFull),
             ),
-            child: _leadingIcon(t, focused),
+            child: _leadingIcon(context, t, focused),
           ),
         ),
       ),
@@ -274,7 +294,10 @@ class NavigationRailItem extends StatelessWidget {
   }) {
     return Row(
       children: [
-        if (showLeading) _leadingIcon(t, focused) else SizedBox(width: iconSize, height: iconSize),
+        if (showLeading)
+          _leadingIcon(context, t, focused)
+        else
+          SizedBox(width: _iconSize(context), height: _iconSize(context)),
         const SizedBox(width: 11),
         Expanded(child: _labelAtOpacity(context, labelOpacity, focused)),
         ?_trailingAtOpacity(labelOpacity),
@@ -319,7 +342,9 @@ class NavigationRailItem extends StatelessWidget {
     }
 
     final collapsedWidth = _collapsedItemWidth(context);
-    const collapsedHeight = collapsedItemHeight;
+    final collapsedHeight = _itemHeight(context);
+    final collapsedIndicatorHeight = _indicatorHeight(context);
+    final iconSize = _iconSize(context);
     final collapsedPillWidth = collapsedWidth < collapsedIndicatorWidth ? collapsedWidth : collapsedIndicatorWidth;
     final indicatorLeft = lerpDouble((collapsedWidth - collapsedPillWidth) / 2, 0, expansion);
     final indicatorTop = lerpDouble((collapsedHeight - collapsedIndicatorHeight) / 2, 0, expansion);
@@ -361,7 +386,7 @@ class NavigationRailItem extends StatelessWidget {
             child: SizedBox(
               width: iconSize,
               height: iconSize,
-              child: Center(child: _leadingIcon(t, focused)),
+              child: Center(child: _leadingIcon(context, t, focused)),
             ),
           ),
         ],
@@ -903,6 +928,9 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
 
   /// Calculate top padding for macOS traffic lights
   double _getTopPadding(BuildContext context) {
+    // Nocturne's TV icon rail sits in the middle band of the screen, clear of
+    // the clock and the spotlight's kicker.
+    if (overlaysContent(context)) return 200 * TvLayoutConstants.scaleOf(context);
     double basePadding = MediaQuery.paddingOf(context).top + 16;
 
     // On macOS, add extra padding for traffic lights (when not fullscreen)
