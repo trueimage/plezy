@@ -25,11 +25,6 @@ import '../test_helpers/prefs.dart';
 /// `--tags golden` can split them from the rest of the suite.
 const goldenTag = 'golden';
 
-/// Set to `strict` to compare goldens on a host that does not render them.
-/// The committed images come from Linux x64, so a strict run elsewhere is only
-/// useful to look at diffs, never to update.
-const goldenHostEnv = 'PLEZY_GOLDENS';
-
 /// Whether this host renders the committed images: Linux x64, as in CI and
 /// `scripts/update_goldens.sh`.
 ///
@@ -37,10 +32,6 @@ const goldenHostEnv = 'PLEZY_GOLDENS';
 /// anti-aliasing slightly differently (Linux arm64 included), so they render
 /// the screens without comparing pixels.
 bool get goldenHostRenders => Abi.current() == Abi.linuxX64;
-
-/// Whether this run compares pixels: on a rendering host, or when forced with
-/// [goldenHostEnv].
-bool get goldenHostMatches => goldenHostRenders || Platform.environment[goldenHostEnv] == 'strict';
 
 /// The form factors every screen is captured at, as logical size at 1x.
 ///
@@ -370,7 +361,7 @@ void installGoldenComparator() {
   goldenFileComparator = _HostGatedGoldenComparator(goldenFileComparator);
 }
 
-/// Compares on hosts that render the committed images ([goldenHostMatches]);
+/// Compares on hosts that render the committed images ([goldenHostRenders]);
 /// elsewhere it accepts every image, so a plain `flutter test` on macOS,
 /// Windows or Linux arm64 still runs the screens without failing on
 /// rasterisation, and it refuses `--update-goldens` so images from those hosts
@@ -383,7 +374,7 @@ class _HostGatedGoldenComparator extends GoldenFileComparator {
 
   @override
   Future<bool> compare(Uint8List imageBytes, Uri golden) async {
-    if (goldenHostMatches) return _inner.compare(imageBytes, golden);
+    if (goldenHostRenders) return _inner.compare(imageBytes, golden);
     if (!_warned) {
       _warned = true;
       debugPrint(

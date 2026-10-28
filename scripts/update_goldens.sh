@@ -72,6 +72,7 @@ docker run --rm --platform linux/amd64 \
       # A full run starts from an empty directory so images of removed tests go away.
       [ "$#" -gt 0 ] || rm -rf test/goldens/goldens
       flutter test --tags golden --update-goldens "${targets[@]}" || status=$?
+      [ "$status" -eq 0 ] || exit "$status"
       if [ "$#" -gt 0 ]; then
         cp -a test/goldens/goldens/. /out/goldens/
       else

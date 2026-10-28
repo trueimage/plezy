@@ -56,7 +56,6 @@ The images are rendered on **Linux x64** with the Flutter version CI pins (`FLUT
 little differently (Linux arm64 too: about a dozen images differ by up to 0.25%). So on macOS, Windows and Linux
 arm64 the tests still pump every screen, and fail on any exception or overflow, but do not compare pixels. A plain
 `flutter test` on a Mac therefore passes; it prints one line per test file saying the images were not compared.
-Set `PLEZY_GOLDENS=strict` to compare anyway, for example to look at diffs; expect small differences.
 
 CI compares them in the Unit Tests job (step "Run golden screenshot tests"). When that step fails, the
 `golden-failures` artifact holds the master, test and diff images for every failing golden.
