@@ -6,11 +6,14 @@ import 'package:plezy/media/media_hub.dart';
 import 'package:plezy/media/media_item.dart';
 import 'package:plezy/media/media_kind.dart';
 import 'package:plezy/media/media_library.dart';
+import 'package:plezy/media/media_part.dart';
 import 'package:plezy/media/media_person.dart';
 import 'package:plezy/media/media_sort.dart';
 import 'package:plezy/media/media_role.dart';
 import 'package:plezy/media/media_server_client.dart';
 import 'package:plezy/media/media_source_info.dart';
+import 'package:plezy/media/media_stream.dart';
+import 'package:plezy/media/media_version.dart';
 import 'package:plezy/media/server_capabilities.dart';
 import 'package:plezy/utils/media_server_http_client.dart';
 
@@ -152,6 +155,67 @@ final MediaItem goldenDetailMovie = testMediaItem(
   serverName: goldenServerName,
 );
 
+/// The Nocturne detail hero's movie: [goldenDetailMovie] with two versions
+/// (4K Dolby Vision with TrueHD Atmos, and 1080p) and a trailer extra, so the
+/// hero shows its media-info chips, the Versions action and the Trailer action.
+final MediaItem goldenDetailMovieWithMedia = testMediaItem(
+  id: 'detail_movie_media',
+  backend: MediaBackend.plex,
+  kind: MediaKind.movie,
+  title: goldenDetailMovie.title,
+  tagline: goldenDetailMovie.tagline,
+  summary: goldenDetailMovie.summary,
+  year: goldenDetailMovie.year,
+  contentRating: goldenDetailMovie.contentRating,
+  durationMs: goldenDetailMovie.durationMs,
+  rating: goldenDetailMovie.rating,
+  studio: goldenDetailMovie.studio,
+  genres: goldenDetailMovie.genres,
+  directors: goldenDetailMovie.directors,
+  writers: goldenDetailMovie.writers,
+  roles: goldenDetailMovie.roles,
+  mediaVersions: const [
+    MediaVersion(
+      id: 'v_4k',
+      width: 3840,
+      height: 2160,
+      videoResolution: '4k',
+      videoCodec: 'hevc',
+      parts: [
+        MediaPart(
+          id: 'p_4k',
+          streams: [
+            MediaStream(id: 's_4k_v', kind: MediaStreamKind.video, codec: 'hevc', dolbyVision: true, hdr: true),
+            MediaStream(
+              id: 's_4k_a',
+              kind: MediaStreamKind.audio,
+              codec: 'truehd',
+              channels: 8,
+              displayTitle: 'English (TrueHD Atmos 7.1)',
+              isDefault: true,
+            ),
+          ],
+        ),
+      ],
+    ),
+    MediaVersion(id: 'v_1080', width: 1920, height: 1080, videoResolution: '1080', videoCodec: 'h264'),
+  ],
+  serverId: goldenServerId,
+  serverName: goldenServerName,
+);
+
+/// [goldenDetailMovieWithMedia]'s trailer.
+final MediaItem goldenTrailer = testMediaItem(
+  id: 'detail_movie_trailer',
+  backend: MediaBackend.plex,
+  kind: MediaKind.clip,
+  title: 'Official Trailer',
+  durationMs: 2 * 60000,
+  serverId: goldenServerId,
+  serverName: goldenServerName,
+  raw: const {'ExtraType': 'Trailer'},
+);
+
 final MediaItem goldenShow = testMediaItem(
   id: 'show_1',
   backend: MediaBackend.plex,
@@ -181,6 +245,41 @@ final MediaItem goldenSeason = testMediaItem(
   serverId: goldenServerId,
   serverName: goldenServerName,
 );
+
+/// Nocturne's show page: [goldenShow] with three seasons, so the season chips
+/// show, the second one with its "4 new" count.
+final MediaItem goldenShowSeasons = testMediaItem(
+  id: 'show_seasons',
+  backend: MediaBackend.plex,
+  kind: MediaKind.show,
+  title: goldenShow.title,
+  summary: goldenShow.summary,
+  year: goldenShow.year,
+  contentRating: goldenShow.contentRating,
+  genres: goldenShow.genres,
+  leafCount: 16,
+  viewedLeafCount: 8,
+  childCount: 3,
+  serverId: goldenServerId,
+  serverName: goldenServerName,
+);
+
+final List<MediaItem> goldenShowSeasonList = [
+  for (final (index, title, viewed) in [(1, 'Season 1', 6), (2, 'Season 2', 2), (3, 'Season 3', 0)])
+    testMediaItem(
+      id: 'show_seasons_$index',
+      backend: MediaBackend.plex,
+      kind: MediaKind.season,
+      title: title,
+      index: index,
+      parentId: goldenShowSeasons.id,
+      parentTitle: goldenShowSeasons.title,
+      leafCount: index == 3 ? 4 : 6,
+      viewedLeafCount: viewed,
+      serverId: goldenServerId,
+      serverName: goldenServerName,
+    ),
+];
 
 /// Six episodes: watched, in progress and unwatched, with summaries of
 /// different lengths.
@@ -307,9 +406,20 @@ class GoldenMediaServerClient implements MediaServerClient {
   late final Map<String, List<MediaItem>> _children = {
     goldenShow.id: [goldenSeason],
     goldenSeason.id: goldenEpisodes,
+    goldenShowSeasons.id: goldenShowSeasonList,
+    for (final season in goldenShowSeasonList) season.id: goldenEpisodes,
   };
 
-  late final List<MediaItem> _items = [goldenDetailMovie, goldenShow, goldenSeason, ...goldenEpisodes, ...goldenMovies];
+  late final List<MediaItem> _items = [
+    goldenDetailMovie,
+    goldenDetailMovieWithMedia,
+    goldenShow,
+    goldenShowSeasons,
+    ...goldenShowSeasonList,
+    goldenSeason,
+    ...goldenEpisodes,
+    ...goldenMovies,
+  ];
 
   @override
   ServerId get serverId => ServerId(goldenServerId);
@@ -332,7 +442,7 @@ class GoldenMediaServerClient implements MediaServerClient {
   }) async {
     final item = _find(id);
     if (item != null) onItemReady?.call(item);
-    return (item: item, onDeckEpisode: id == goldenShow.id ? goldenEpisodes[2] : null);
+    return (item: item, onDeckEpisode: id == goldenShow.id || id == goldenShowSeasons.id ? goldenEpisodes[2] : null);
   }
 
   @override
@@ -416,6 +526,13 @@ class GoldenMediaServerClient implements MediaServerClient {
 
   @override
   Future<List<MediaItem>> fetchChildren(String parentId) async => _children[parentId] ?? const [];
+
+  /// Only [goldenDetailMovieWithMedia] has extras. Every other item fails the
+  /// way an unanswered call always has here, so its detail page is unchanged.
+  @override
+  Future<List<MediaItem>> fetchExtras(String id) => id == goldenDetailMovieWithMedia.id
+      ? Future.value([goldenTrailer])
+      : super.noSuchMethod(Invocation.method(#fetchExtras, [id])) as Future<List<MediaItem>>;
 
   @override
   Future<LibraryPage<MediaItem>> fetchChildrenPage(

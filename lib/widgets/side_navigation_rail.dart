@@ -24,7 +24,6 @@ import '../services/music/music_playback_service.dart';
 import '../services/settings_service.dart';
 import '../utils/music_navigation.dart';
 import '../utils/content_utils.dart';
-import '../utils/layout_constants.dart';
 import '../utils/platform_detector.dart';
 import '../utils/scroll_utils.dart';
 import '../utils/library_grouping.dart';
@@ -201,7 +200,7 @@ class NavigationRailItem extends StatelessWidget {
 
   /// Nocturne's TV icon rail draws larger icons on taller rows.
   static double _scaleFor(BuildContext context) =>
-      SideNavigationRailState.overlaysContent(context) ? TvLayoutConstants.scaleOf(context) : 0;
+      SideNavigationRailState.overlaysContent(context) ? PlezyLayout.designScaleOf(context) : 0;
 
   double _iconSize(BuildContext context) {
     final nocturne = _scaleFor(context);
@@ -534,12 +533,15 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
 
   static double collapsedWidthForContext(BuildContext context) {
     if (!PlatformDetector.isTV()) return collapsedWidth;
-    return overlaysContent(context) ? PlezyLayout.of(context).railWidth : tvCollapsedWidth;
+    return overlaysContent(context)
+        ? PlezyLayout.of(context).railWidth * PlezyLayout.designScaleOf(context)
+        : tvCollapsedWidth;
   }
 
   /// Width of the open rail: Nocturne's TV rail opens wider, as an overlay.
-  static double expandedWidthForContext(BuildContext context) =>
-      overlaysContent(context) ? PlezyLayout.of(context).railOpenWidth : expandedWidth;
+  static double expandedWidthForContext(BuildContext context) => overlaysContent(context)
+      ? PlezyLayout.of(context).railOpenWidth * PlezyLayout.designScaleOf(context)
+      : expandedWidth;
 
   /// Whether the rail opens over the content instead of pushing it aside: the
   /// Nocturne layout's TV icon rail, where content never reflows.
@@ -930,7 +932,7 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
   double _getTopPadding(BuildContext context) {
     // Nocturne's TV icon rail sits in the middle band of the screen, clear of
     // the clock and the spotlight's kicker.
-    if (overlaysContent(context)) return 200 * TvLayoutConstants.scaleOf(context);
+    if (overlaysContent(context)) return 200 * PlezyLayout.designScaleOf(context);
     double basePadding = MediaQuery.paddingOf(context).top + 16;
 
     // On macOS, add extra padding for traffic lights (when not fullscreen)

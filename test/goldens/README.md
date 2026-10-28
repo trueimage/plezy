@@ -19,7 +19,7 @@ does not modify the existing ones.
 | Screen (`goldens/<screen>/`) | Themes | Form factors | What it shows |
 |---|---|---|---|
 | `shell` | all 10 | phone, desktop, TV | Navigation shell around a library grid of `MediaCard`s: the `NavigationBar` on the phone, the collapsed `SideNavigationRail` on desktop and TV |
-| `detail_hero` | all 10 | phone, desktop, TV | `MediaDetailScreen` hero for a movie with full metadata |
+| `detail_hero` | all 10 | phone, desktop, TV | `MediaDetailScreen` hero for a movie with full metadata (Nocturne's movie also has two versions, media info and a trailer) |
 | `tv_focus` | all 10 | TV | The shell with the first card focused in keyboard (D-pad) mode: focus ring, scale and glow |
 | `navigation` | Light, Dark, Nocturne | phone, desktop, TV | The rail held open with its library list (desktop, TV); the bottom bar without labels (phone) |
 | `hub_section` | Light, Dark, Nocturne | phone, desktop, TV | Continue Watching and a movie `HubSection` |
@@ -34,6 +34,7 @@ does not modify the existing ones.
 | `nocturne_home_variants` | Nocturne True black + Ivory | TV | The home spotlight with both Nocturne settings changed |
 | `nocturne_home_hc` | Nocturne | TV | The home spotlight with the platform's high-contrast flag: no scale, no glow, the 4 px ring |
 | `nocturne_home_reduced` | Nocturne | TV | The home spotlight on the reduced visual-effects tier |
+| `nocturne_detail_show` | Nocturne | phone, desktop, TV | A three-season show's page: the season chips with their "N new" counts over the episode list |
 | `nocturne_library` | Nocturne | phone, desktop, TV | `LibrariesScreen` on a 128-title Movies library: the header, chips and A–Z jump rail |
 | `nocturne_search` / `nocturne_search_none` | Nocturne | phone, desktop, TV | `SearchScreen` with results, and with none |
 | `nocturne_state_loading` / `_empty` / `_offline` | Nocturne | phone, desktop, TV | The home while the server has not answered, has nothing, and cannot be reached |

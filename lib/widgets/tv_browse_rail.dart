@@ -40,8 +40,14 @@ import 'rasterized_gradient.dart';
 import 'settings_builder.dart';
 import 'sliver_child_memo.dart';
 import '../theme/type_scale.dart';
+import '../theme/plezy_layout.dart';
+import 'nocturne/nocturne_person_portrait.dart';
 
 const _inactiveArtworkDimAlpha = 0.3;
+
+/// Nocturne's cast portraits fill this share of the card's width, so the row
+/// reads as faces with room between them rather than tiles.
+const _nocturnePortraitShare = 0.72;
 
 class TvBrowseRailLayoutMetrics {
   final bool isPersonHub;
@@ -1578,8 +1584,11 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
           alignment: .centerLeft,
           child: Row(
             children: [
-              AppIcon(widget.iconForHub(hub, hubIndex), fill: 1, size: 20 * scale, color: iconColor),
-              SizedBox(width: 8 * scale),
+              // Nocturne's row headers are type alone.
+              if (!PlezyLayout.isNocturne(context)) ...[
+                AppIcon(widget.iconForHub(hub, hubIndex), fill: 1, size: 20 * scale, color: iconColor),
+                SizedBox(width: 8 * scale),
+              ],
               Expanded(
                 child: Row(
                   children: [
@@ -2027,24 +2036,47 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
         padding: .fromLTRB(3 * scale, 3 * scale, 3 * scale, scale),
         child: Column(
           mainAxisSize: .min,
-          crossAxisAlignment: .start,
+          crossAxisAlignment: PlezyLayout.isNocturne(context) ? .center : .start,
           children: [
-            CardFocusBorder(
-              borderRadius: tokens(context).radiusSm,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(tokens(context).radiusSm),
-                child: OptimizedMediaImage(
-                  client: context.tryGetMediaClientWithFallback(serverIdOrNull(item.serverId)),
-                  imagePath: item.thumbPath,
-                  width: imageSize,
-                  height: imageSize,
-                  fit: BoxFit.cover,
-                  imageType: ImageType.square,
-                  fallbackIcon: Symbols.person_rounded,
-                  artworkDim: artworkDim,
+            if (PlezyLayout.isNocturne(context))
+              // Nocturne: a smaller round portrait, initials when there is no
+              // photo.
+              CardFocusBorder(
+                borderRadius: imageSize * _nocturnePortraitShare / 2,
+                child: NocturnePersonPortrait(
+                  name: item.displayTitle,
+                  size: imageSize * _nocturnePortraitShare,
+                  photo: (item.thumbPath?.isEmpty ?? true)
+                      ? null
+                      : OptimizedMediaImage(
+                          client: context.tryGetMediaClientWithFallback(serverIdOrNull(item.serverId)),
+                          imagePath: item.thumbPath,
+                          width: imageSize * _nocturnePortraitShare,
+                          height: imageSize * _nocturnePortraitShare,
+                          fit: BoxFit.cover,
+                          imageType: ImageType.square,
+                          fallbackIcon: Symbols.person_rounded,
+                          artworkDim: artworkDim,
+                        ),
+                ),
+              )
+            else
+              CardFocusBorder(
+                borderRadius: tokens(context).radiusSm,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(tokens(context).radiusSm),
+                  child: OptimizedMediaImage(
+                    client: context.tryGetMediaClientWithFallback(serverIdOrNull(item.serverId)),
+                    imagePath: item.thumbPath,
+                    width: imageSize,
+                    height: imageSize,
+                    fit: BoxFit.cover,
+                    imageType: ImageType.square,
+                    fallbackIcon: Symbols.person_rounded,
+                    artworkDim: artworkDim,
+                  ),
                 ),
               ),
-            ),
             SizedBox(height: 6 * scale),
             Text(
               item.displayTitle,

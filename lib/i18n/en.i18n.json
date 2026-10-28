@@ -2575,6 +2575,9 @@
     "nextUp": "Next up",
     "watched": "Watched",
     "versions": "${count} versions",
+    "versionsButton": "Versions",
+    "trailer": "Trailer",
+    "newCount": "${count} new",
     "directedBy": "Directed by ${name}"
   }
 }

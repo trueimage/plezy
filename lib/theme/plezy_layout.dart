@@ -33,7 +33,7 @@ class PlezyLayout extends ThemeExtension<PlezyLayout> {
     this.heroTextHeight = 0.52,
     this.backdropHeight = 0.62,
     this.rowFocusLine = 592,
-    this.logoBox = const Size(520, 160),
+    this.logoBox = const Size(520, 128),
     this.posterWidth = 220,
     this.wideWidth = 400,
     this.cardGap = 24,
@@ -51,6 +51,13 @@ class PlezyLayout extends ThemeExtension<PlezyLayout> {
 
   /// Whether the theme in [context] draws the Nocturne layout.
   static bool isNocturne(BuildContext context) => of(context).variant == LayoutVariant.nocturne;
+
+  /// Device pixels per design pixel on TV: the layout's lengths are drawn at
+  /// 1080p, so a 960x540 dp TV draws them at half size. Unlike the classic
+  /// TV scale, it is not floored at 0.85, which would draw the design at
+  /// 1.7 times its proportions on the common 540 dp screen.
+  static double designScaleOf(BuildContext context) =>
+      (MediaQuery.sizeOf(context).height / 1080).clamp(0.5, 1.35).toDouble();
 
   final LayoutVariant variant;
 

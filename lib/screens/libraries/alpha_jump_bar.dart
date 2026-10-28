@@ -274,10 +274,7 @@ class _AlphaJumpBarState extends State<AlphaJumpBar> {
                       BoxDecoration? decoration;
                       if (isHighlighted) {
                         // Nocturne inverts the focused letter, like its other focus.
-                        decoration = BoxDecoration(
-                          color: tk?.text ?? colorScheme.primary,
-                          shape: BoxShape.circle,
-                        );
+                        decoration = BoxDecoration(color: tk?.text ?? colorScheme.primary, shape: BoxShape.circle);
                       } else if (isCurrent && nocturne) {
                         decoration = null;
                       } else if (isCurrent) {

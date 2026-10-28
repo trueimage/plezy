@@ -32,11 +32,27 @@ void main() {
     themes: allGoldenThemes.where(classic).toList(),
     episodeThemes: screenGoldenThemes.where(classic).toList(),
   );
-  _detailMatrices(themes: [nocturneGoldenTheme], episodeThemes: [nocturneGoldenTheme]);
+  // Nocturne's hero draws media-info chips and the Versions and Trailer
+  // actions, so it shows the movie that has them.
+  _detailMatrices(
+    themes: [nocturneGoldenTheme],
+    episodeThemes: [nocturneGoldenTheme],
+    movie: goldenDetailMovieWithMedia,
+  );
+  // A show's page: Nocturne's season chips with their "N new" count.
+  goldenMatrix(
+    'nocturne_detail_show',
+    themes: [nocturneGoldenTheme],
+    body: (tester, golden) => _pumpDetail(tester, golden, goldenShowSeasons),
+  );
 }
 
-void _detailMatrices({required List<GoldenTheme> themes, required List<GoldenTheme> episodeThemes}) {
-  goldenMatrix('detail_hero', themes: themes, body: (tester, golden) => _pumpDetail(tester, golden, goldenDetailMovie));
+void _detailMatrices({required List<GoldenTheme> themes, required List<GoldenTheme> episodeThemes, MediaItem? movie}) {
+  goldenMatrix(
+    'detail_hero',
+    themes: themes,
+    body: (tester, golden) => _pumpDetail(tester, golden, movie ?? goldenDetailMovie),
+  );
 
   goldenMatrix(
     'episode_list',

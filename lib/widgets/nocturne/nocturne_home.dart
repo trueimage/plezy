@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -9,6 +11,8 @@ import '../../media/media_server_client.dart';
 import '../../navigation/main_screen_scope.dart';
 import '../../services/device_performance.dart';
 import '../../theme/mono_tokens.dart';
+import '../../theme/surface_tokens.dart';
+import '../media_card.dart' show SkeletonLoader;
 import '../tv_spotlight_scaffold.dart' show TvSpotlightClientResolver;
 import 'nocturne_spotlight.dart';
 
@@ -99,6 +103,9 @@ class NocturneTvHomeState extends State<NocturneTvHome> {
     final textLeft = (m.safeX - foregroundLeft).clamp(0.0, double.infinity).toDouble();
     final rowTop = m.layout.rowFocusLine * m.scale;
     final foldedRowTop = (m.layout.safeY + 96) * m.scale;
+    // The band ends where the rows begin, so the rail's first header never
+    // runs under the buttons whatever the screen size.
+    final bandTop = (m.layout.safeY + 24) * m.scale;
 
     return Material(
       color: Theme.of(context).scaffoldBackgroundColor,
@@ -122,15 +129,16 @@ class NocturneTvHomeState extends State<NocturneTvHome> {
             valueListenable: widget.activeHubIndex,
             builder: (context, activeHub, _) {
               final folded = activeHub > 0;
+              final rowsTop = folded ? foldedRowTop : rowTop - 12 * m.scale;
               return Stack(
                 fit: StackFit.expand,
                 clipBehavior: Clip.none,
                 children: [
                   Positioned(
                     left: textLeft,
-                    top: m.layout.safeY * m.scale + m.pick(tv: 52, desktop: 0, phone: 0),
+                    top: bandTop,
                     width: size.width * 0.5,
-                    height: (folded ? foldedRowTop - m.layout.safeY * m.scale : rowTop) - 52 * m.scale,
+                    height: rowsTop - bandTop,
                     child: ValueListenableBuilder<MediaItem?>(
                       valueListenable: widget.spotlight,
                       builder: (context, _, _) {
@@ -157,7 +165,7 @@ class NocturneTvHomeState extends State<NocturneTvHome> {
                     curve: const Cubic(0.3, 0, 0.1, 1),
                     left: 0,
                     right: 0,
-                    top: folded ? foldedRowTop : rowTop - m.pick(tv: 12, desktop: 0, phone: 0),
+                    top: rowsTop,
                     bottom: 0,
                     child: widget.rows,
                   ),
@@ -331,6 +339,106 @@ class NocturneHomeHero extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The Nocturne home while the server has not answered: the spotlight's
+/// title, lines and buttons, then a row of wide cards and a row of posters,
+/// as static tonal blocks (no shimmer, so it costs nothing on the reduced
+/// tier).
+class NocturneHomeSkeleton extends StatelessWidget {
+  const NocturneHomeSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final m = NocturneMetrics.of(context);
+    final surfaces = SurfaceTokens.of(context);
+    final small = BorderRadius.circular(surfaces.skeletonTextRadius);
+    final card = BorderRadius.circular(surfaces.skeletonRadius);
+    final left = math.max(0.0, m.safeX - MainScreenFocusScope.foregroundLeftOf(context));
+    Widget bar(double width, double height, {BorderRadius? radius}) => SkeletonLoader(
+      borderRadius: radius ?? small,
+      child: SizedBox(width: width, height: height),
+    );
+    Widget row({required double width, required double height, required double gap}) => SizedBox(
+      height: height + gap + m.caption * 1.1,
+      child: ClipRect(
+        child: OverflowBox(
+          alignment: Alignment.topLeft,
+          maxWidth: double.infinity,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var i = 0; i < 8; i++) ...[
+                if (i > 0) SizedBox(width: gap),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    bar(width, height, radius: card),
+                    SizedBox(height: gap * 0.66),
+                    bar(width * 0.7, m.caption * 0.6),
+                    SizedBox(height: gap * 0.33),
+                    bar(width * 0.45, m.caption * 0.5),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+    final gap = m.pick(tv: 24, desktop: 16, phone: 12);
+    final wide = m.pick(tv: 400, desktop: 280, phone: 220);
+    final poster = m.pick(tv: 220, desktop: 150, phone: 110);
+    final skeleton = IgnorePointer(
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: left,
+          top: m.pick(tv: m.layout.safeY + 52, desktop: 0, phone: 0),
+        ),
+        child: Column(
+          key: const Key('nocturne_home_skeleton'),
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            bar(m.pick(tv: 140, desktop: 90, phone: 80), m.kicker * 0.5),
+            SizedBox(height: gap),
+            bar(m.logoBox.width, m.logoBox.height * 0.75, radius: card),
+            SizedBox(height: gap),
+            bar(m.logoBox.width * 1.1, m.caption * 0.6),
+            SizedBox(height: gap * 0.5),
+            bar(m.logoBox.width * 1.7, m.caption * 0.6),
+            SizedBox(height: gap * 0.5),
+            bar(m.logoBox.width * 1.6, m.caption * 0.6),
+            SizedBox(height: gap),
+            Row(
+              children: [
+                bar(m.buttonHeight * 3.1, m.buttonHeight, radius: BorderRadius.circular(m.buttonHeight)),
+                SizedBox(width: gap * 0.6),
+                bar(m.buttonHeight * 2.1, m.buttonHeight, radius: BorderRadius.circular(m.buttonHeight)),
+              ],
+            ),
+            SizedBox(height: gap * 2.5),
+            bar(m.pick(tv: 260, desktop: 170, phone: 140), m.caption),
+            SizedBox(height: gap * 0.66),
+            row(width: wide, height: wide * 9 / 16, gap: gap),
+            SizedBox(height: gap * 1.5),
+            bar(m.pick(tv: 200, desktop: 130, phone: 110), m.caption),
+            SizedBox(height: gap * 0.66),
+            row(width: poster, height: poster * 1.5, gap: gap),
+          ],
+        ),
+      ),
+    );
+    // Over a bounded area (the TV home) the blocks run off the bottom edge
+    // the way the real rows do; in a scroll view they take their own height.
+    return LayoutBuilder(
+      builder: (context, constraints) => constraints.hasBoundedHeight
+          ? ClipRect(
+              child: OverflowBox(alignment: Alignment.topLeft, maxHeight: double.infinity, child: skeleton),
+            )
+          : skeleton,
     );
   }
 }

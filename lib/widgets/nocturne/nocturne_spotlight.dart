@@ -17,7 +17,6 @@ import '../../theme/surface_tokens.dart';
 import '../../theme/type_scale.dart';
 import '../../utils/content_utils.dart';
 import '../../utils/formatters.dart';
-import '../../utils/layout_constants.dart';
 import '../../utils/platform_detector.dart';
 import '../app_icon.dart';
 import '../cycling_media_backdrop.dart';
@@ -52,7 +51,7 @@ class NocturneMetrics {
     final formFactor = NocturneFormFactor.of(context);
     return NocturneMetrics._(
       formFactor,
-      formFactor.isTv ? TvLayoutConstants.scaleOf(context) : 1.0,
+      formFactor.isTv ? PlezyLayout.designScaleOf(context) : 1.0,
       TypeScale.of(context),
       PlezyLayout.of(context),
     );
@@ -552,14 +551,44 @@ class NocturneButton extends StatelessWidget {
           final focused = Focus.of(context).hasFocus && InputModeTracker.isKeyboardMode(context);
           return MouseRegion(
             cursor: onPressed == null ? MouseCursor.defer : SystemMouseCursors.click,
-            child: GestureDetector(onTap: onPressed, child: _face(context, m, height, focused)),
+            child: GestureDetector(
+              onTap: onPressed,
+              child: NocturneButtonFace(style: style, icon: icon, label: label, detail: detail, focused: focused),
+            ),
           );
         },
       ),
     );
   }
+}
 
-  Widget _face(BuildContext context, NocturneMetrics m, double height, bool focused) {
+/// How a [NocturneButton] looks, for controls that own their focus elsewhere
+/// (the detail page's action row): the pill or circle, inverted when
+/// [focused].
+class NocturneButtonFace extends StatelessWidget {
+  const NocturneButtonFace({
+    super.key,
+    required this.style,
+    this.icon,
+    this.label,
+    this.detail,
+    this.focused = false,
+    this.height,
+  });
+
+  final NocturneButtonStyle style;
+  final IconData? icon;
+  final String? label;
+  final String? detail;
+  final bool focused;
+
+  /// Defaults to the form factor's button height.
+  final double? height;
+
+  @override
+  Widget build(BuildContext context) {
+    final m = NocturneMetrics.of(context);
+    final height = this.height ?? m.buttonHeight;
     final t = tokens(context);
     final surfaces = SurfaceTokens.of(context);
     final scheme = Theme.of(context).colorScheme;
@@ -594,8 +623,9 @@ class NocturneButton extends StatelessWidget {
       ],
     );
     final detail = this.detail;
-    if (primary) {
+    if (primary && !focused) {
       // The accent covers the action; a light tail carries the detail.
+      // Focused, the whole pill turns light like the other buttons.
       return ClipRRect(
         borderRadius: BorderRadius.circular(height / 2),
         child: SizedBox(
@@ -606,11 +636,11 @@ class NocturneButton extends StatelessWidget {
               Container(
                 alignment: Alignment.center,
                 padding: EdgeInsets.only(left: padX * 0.9, right: detail == null ? padX : gap),
-                color: focused ? light : scheme.primary,
+                color: scheme.primary,
                 child: IconTheme.merge(
-                  data: IconThemeData(color: focused ? dark : scheme.onPrimary),
+                  data: IconThemeData(color: scheme.onPrimary),
                   child: DefaultTextStyle.merge(
-                    style: TextStyle(color: focused ? dark : scheme.onPrimary),
+                    style: TextStyle(color: scheme.onPrimary),
                     child: head,
                   ),
                 ),

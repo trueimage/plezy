@@ -992,7 +992,10 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                   );
                 },
               ),
-              if (_isLoading) LoadingIndicatorBox.sliver,
+              if (_isLoading)
+                PlezyLayout.isNocturne(context)
+                    ? const SliverToBoxAdapter(child: NocturneHomeSkeleton())
+                    : LoadingIndicatorBox.sliver,
               if (_errorMessage != null) SliverErrorState(message: _errorMessage!, onRetry: _discover.load),
               if (!_isLoading && _errorMessage == null) ...[
                 if (continueWatchingHub != null)
@@ -1180,7 +1183,10 @@ class _DiscoverScreenState extends State<DiscoverScreen>
 
   /// The TV home's states and toolbar, around the [rail] when it is given.
   List<Widget> _tvHomeOverlays(List<MediaHub> browseHubs, {required Widget? rail}) => [
-    if (_isLoading || (_areHubsLoading && browseHubs.isEmpty)) const Center(child: CircularProgressIndicator()),
+    if (_isLoading || (_areHubsLoading && browseHubs.isEmpty))
+      PlezyLayout.isNocturne(context)
+          ? const Positioned.fill(child: NocturneHomeSkeleton())
+          : const Center(child: CircularProgressIndicator()),
     if (_errorMessage != null)
       ErrorStateWidget(
         message: _errorMessage!,

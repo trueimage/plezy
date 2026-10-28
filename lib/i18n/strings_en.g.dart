@@ -6206,6 +6206,15 @@ class Translations$nocturne$en {
 	/// en: '${count} versions'
 	String versions({required Object count}) => '${count} versions';
 
+	/// en: 'Versions'
+	String get versionsButton => 'Versions';
+
+	/// en: 'Trailer'
+	String get trailer => 'Trailer';
+
+	/// en: '${count} new'
+	String newCount({required Object count}) => '${count} new';
+
 	/// en: 'Directed by ${name}'
 	String directedBy({required Object name}) => 'Directed by ${name}';
 }
@@ -10489,6 +10498,9 @@ extension on Translations {
 			'nocturne.nextUp' => 'Next up',
 			'nocturne.watched' => 'Watched',
 			'nocturne.versions' => ({required Object count}) => '${count} versions',
+			'nocturne.versionsButton' => 'Versions',
+			'nocturne.trailer' => 'Trailer',
+			'nocturne.newCount' => ({required Object count}) => '${count} new',
 			'nocturne.directedBy' => ({required Object name}) => 'Directed by ${name}',
 			_ => null,
 		};

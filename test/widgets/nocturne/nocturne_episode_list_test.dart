@@ -39,7 +39,11 @@ void main() {
   late List<String> log;
   final listKey = GlobalKey<NocturneEpisodeListState>();
 
-  Future<void> pumpList(WidgetTester tester, {List<MediaHub>? seasons}) async {
+  Future<void> pumpList(
+    WidgetTester tester, {
+    List<MediaHub>? seasons,
+    int? Function(int seasonIndex)? unwatchedCountOf,
+  }) async {
     log = [];
     final hubs = seasons ?? [_season(1, 3), _season(2, 2)];
     await tester.pumpWidget(
@@ -55,6 +59,7 @@ void main() {
                   seasons: hubs,
                   selectedSeason: 0,
                   clientFor: (_) => null,
+                  unwatchedCountOf: unwatchedCountOf,
                   onSeasonSelected: (season, index) => log.add('season $index'),
                   onEpisodeFocused: (season, episode) => log.add('focus ${episode.id}'),
                   onEpisodeActivated: (season, episode) => log.add('play ${episode.id}'),
@@ -148,6 +153,12 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pump();
     expect(log, contains('season 1'));
+  });
+
+  testWidgets('a season chip shows its unwatched count, and nothing when it has none', (tester) async {
+    await pumpList(tester, unwatchedCountOf: (index) => index == 1 ? 4 : 0);
+    expect(find.textContaining('4 new', findRichText: true), findsOneWidget);
+    expect(find.textContaining('0 new', findRichText: true), findsNothing);
   });
 
   testWidgets('a single season shows no chips: Up from the first episode leaves the list', (tester) async {

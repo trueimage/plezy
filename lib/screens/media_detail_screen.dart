@@ -3799,7 +3799,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
         ? size.height * _NocturneMediaDetail.episodeListHeight + 16 * detailScale
         : (railHeight - railTopPadding) + (_tvDetailActionRailGap * detailScale);
     final spotlightLeft = PlezyLayout.isNocturne(context)
-        ? PlezyLayout.of(context).safeX * detailScale
+        ? PlezyLayout.of(context).safeX * PlezyLayout.designScaleOf(context)
         : (24 * detailScale).clamp(18.0, 40.0).toDouble();
     // See _tvDetailRouteSettled. The children stay in place (only their
     // content is withheld) so the Stack keeps its elements across the swap.

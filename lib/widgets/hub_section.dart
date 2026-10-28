@@ -32,6 +32,7 @@ import 'horizontal_scroll_with_arrows.dart';
 import 'tv_browse_rail.dart';
 import '../i18n/strings.g.dart';
 import '../theme/type_scale.dart';
+import '../theme/plezy_layout.dart';
 
 enum HubCardSizing {
   /// Larger cards optimized for top-level TV shelves.
@@ -528,8 +529,11 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
                   child: Row(
                     mainAxisSize: .min,
                     children: [
-                      AppIcon(widget.icon, fill: 1, size: isTv ? 28 : null),
-                      SizedBox(width: isTv ? 12 : 8),
+                      // Nocturne's row headers are type alone.
+                      if (!PlezyLayout.isNocturne(context)) ...[
+                        AppIcon(widget.icon, fill: 1, size: isTv ? 28 : null),
+                        SizedBox(width: isTv ? 12 : 8),
+                      ],
                       Flexible(
                         child: Text(widget.hub.title, style: titleStyle, overflow: .ellipsis, maxLines: 1),
                       ),

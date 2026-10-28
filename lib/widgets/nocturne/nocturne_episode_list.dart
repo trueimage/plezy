@@ -38,6 +38,7 @@ class NocturneEpisodeList extends StatefulWidget {
     required this.onBack,
     this.initialEpisodeId,
     this.hideSpoilers = false,
+    this.unwatchedCountOf,
   });
 
   /// One hub per season, each holding its loaded episodes; a single hub
@@ -54,6 +55,10 @@ class NocturneEpisodeList extends StatefulWidget {
   final VoidCallback onBack;
   final String? initialEpisodeId;
   final bool hideSpoilers;
+
+  /// Unwatched episodes in the season at an index, shown as "N new" on its
+  /// chip; null or zero shows nothing.
+  final int? Function(int seasonIndex)? unwatchedCountOf;
 
   @override
   State<NocturneEpisodeList> createState() => NocturneEpisodeListState();
@@ -202,6 +207,7 @@ class NocturneEpisodeListState extends State<NocturneEpisodeList> {
                     _SeasonChip(
                       focusNode: _chipNodes[i],
                       label: widget.seasons[i].title,
+                      newCount: widget.unwatchedCountOf?.call(i),
                       selected: i == widget.selectedSeason,
                       onKey: (event) => _onChipKey(i, event),
                       onTap: () => widget.onSeasonSelected(widget.seasons[i], i),
@@ -243,10 +249,12 @@ class _SeasonChip extends StatelessWidget {
     required this.selected,
     required this.onKey,
     required this.onTap,
+    this.newCount,
   });
 
   final FocusNode focusNode;
   final String label;
+  final int? newCount;
   final bool selected;
   final KeyEventResult Function(KeyEvent event) onKey;
   final VoidCallback onTap;
@@ -254,7 +262,7 @@ class _SeasonChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final m = NocturneMetrics.of(context);
-    final t = tokens(context);
+    final tk = tokens(context);
     final surfaces = SurfaceTokens.of(context);
     return Focus(
       focusNode: focusNode,
@@ -272,7 +280,7 @@ class _SeasonChip extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: m.pick(tv: 24, desktop: 14, phone: 14)),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: light ? t.text : surfaces.raisedSurface ?? t.surface,
+                color: light ? tk.text : surfaces.raisedSurface ?? tk.surface,
                 borderRadius: BorderRadius.circular(surfaces.chipRadius),
                 border: focused && selected
                     ? Border.all(
@@ -280,13 +288,25 @@ class _SeasonChip extends StatelessWidget {
                         width: FocusTheme.of(context).ringWidth,
                         strokeAlign: BorderSide.strokeAlignOutside,
                       )
-                    : Border.all(color: light ? t.text : t.outline.withValues(alpha: 0.24)),
+                    : Border.all(color: light ? tk.text : tk.outline.withValues(alpha: 0.24)),
               ),
-              child: Text(
-                label,
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(text: label),
+                    if (newCount case final count? when count > 0)
+                      TextSpan(
+                        text: '  ${t.nocturne.newCount(count: count)}',
+                        style: TextStyle(
+                          color: light ? tk.bg.withValues(alpha: 0.7) : tk.accent,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                  ],
+                ),
                 maxLines: 1,
                 style: TextStyle(
-                  color: light ? t.bg : t.text,
+                  color: light ? tk.bg : tk.text,
                   fontSize: m.label,
                   fontWeight: FontWeight.w600,
                   height: 1.2,

@@ -4,8 +4,9 @@ part of '../media_detail_screen.dart';
 /// metadata line, the media-info chips, the synopsis and credits, then the
 /// action row; a show's seasons and episodes list below it vertically.
 extension _NocturneMediaDetail on _MediaDetailScreenState {
-  /// Height of the TV action row in the Nocturne layout at 1080p.
-  static const double nocturneActionSize = 64;
+  /// Height of the TV action row in the Nocturne layout at 1080p: the same
+  /// as the home spotlight's buttons.
+  static const double nocturneActionSize = 70;
 
   /// Share of the screen the vertical episode list takes on TV.
   static const double episodeListHeight = 0.46;
@@ -34,115 +35,136 @@ extension _NocturneMediaDetail on _MediaDetailScreenState {
       if (metadata.genres case final genres? when genres.isNotEmpty) genres.take(2).join(', '),
     ];
     final lineStyle = TextStyle(color: tk.textMuted, fontSize: m.caption, height: 1.4);
+    final width = MediaQuery.sizeOf(context).width;
 
     return Align(
       alignment: Alignment.bottomLeft,
       child: FittedBox(
         fit: BoxFit.scaleDown,
         alignment: Alignment.bottomLeft,
+        // The action row runs wider than the text above it, as on the board.
         child: SizedBox(
-          width: MediaQuery.sizeOf(context).width * 0.5,
+          width: width * 0.62,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Semantics(
-                container: true,
-                button: true,
-                label: _tvDetailInformationSemanticLabel(
-                  metadata,
-                  description: description,
-                  genres: metadata.genres ?? const [],
-                ),
-                hint: t.mediaMenu.viewDetails,
-                onTap: openDetails,
-                child: ExcludeSemantics(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      NocturneLogoOrTitle(
-                        item: metadata,
-                        client: _getArtworkMediaClient(context),
-                        title: metadata.grandparentTitle ?? metadata.displayTitle,
-                      ),
-                      SizedBox(height: 12 * m.scale),
-                      // The focusable path to the full-information sheet
-                      // (#2042): background-only focus, no layout change.
-                      FocusableWrapper(
-                        focusNode: _tvDetailInfoFocusNode,
-                        onSelect: openDetails,
-                        onNavigateUp: _backButtonFocusNode.requestFocus,
-                        onNavigateDown: _focusTvDetailActionRow,
-                        onBack: _popMediaDetailIfBackNotSuppressed,
-                        useBackgroundFocus: true,
-                        disableScale: true,
-                        autoScroll: false,
-                        borderRadius: 10,
-                        descendantsAreFocusable: false,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: openDetails,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (focusedEpisode?.title case final title? when title.isNotEmpty)
-                                Text(
-                                  title,
-                                  key: const ValueKey('tv_detail_episode_title'),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: tk.text,
-                                    fontSize: m.size(m.type.detailSubtitle),
-                                    fontWeight: FontWeight.w700,
-                                    height: 1.3,
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: width * 0.5),
+                child: Semantics(
+                  container: true,
+                  button: true,
+                  label: _tvDetailInformationSemanticLabel(
+                    metadata,
+                    description: description,
+                    genres: metadata.genres ?? const [],
+                  ),
+                  hint: t.mediaMenu.viewDetails,
+                  onTap: openDetails,
+                  child: ExcludeSemantics(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        NocturneLogoOrTitle(
+                          item: metadata,
+                          client: _getArtworkMediaClient(context),
+                          title: metadata.grandparentTitle ?? metadata.displayTitle,
+                        ),
+                        SizedBox(height: 12 * m.scale),
+                        // The focusable path to the full-information sheet
+                        // (#2042): background-only focus, no layout change.
+                        FocusableWrapper(
+                          focusNode: _tvDetailInfoFocusNode,
+                          onSelect: openDetails,
+                          onNavigateUp: _backButtonFocusNode.requestFocus,
+                          onNavigateDown: _focusTvDetailActionRow,
+                          onBack: _popMediaDetailIfBackNotSuppressed,
+                          useBackgroundFocus: true,
+                          disableScale: true,
+                          autoScroll: false,
+                          borderRadius: 10,
+                          descendantsAreFocusable: false,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: openDetails,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (focusedEpisode?.title case final title? when title.isNotEmpty)
+                                  Text(
+                                    title,
+                                    key: const ValueKey('tv_detail_episode_title'),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: tk.text,
+                                      fontSize: m.size(m.type.detailSubtitle),
+                                      fontWeight: FontWeight.w700,
+                                      height: 1.3,
+                                    ),
                                   ),
-                                ),
-                              _buildTvDetailMetadataLine(context, metadata, scale),
-                              if (chips.isNotEmpty) ...[
-                                SizedBox(height: 14 * m.scale),
-                                NocturneInfoChips(labels: chips, versionLabel: versions > 1 ? chips.last : null),
-                              ],
-                              if (description != null && description.isNotEmpty) ...[
-                                SizedBox(height: 16 * m.scale),
-                                Text(
-                                  description,
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: tk.text.withValues(alpha: 0.92),
-                                    fontSize: m.size(m.type.detailSummary),
-                                    fontWeight: FontWeight.w500,
-                                    height: 1.4,
+                                _buildTvDetailMetadataLine(context, metadata, m.scale),
+                                if (chips.isNotEmpty) ...[
+                                  SizedBox(height: 14 * m.scale),
+                                  NocturneInfoChips(labels: chips, versionLabel: versions > 1 ? chips.last : null),
+                                ],
+                                if (description != null && description.isNotEmpty) ...[
+                                  SizedBox(height: 16 * m.scale),
+                                  Text(
+                                    description,
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: tk.text.withValues(alpha: 0.92),
+                                      fontSize: m.size(m.type.detailSummary),
+                                      fontWeight: FontWeight.w500,
+                                      height: 1.4,
+                                    ),
                                   ),
-                                ),
+                                ],
+                                if (credits.isNotEmpty && focusedEpisode == null) ...[
+                                  SizedBox(height: 10 * m.scale),
+                                  Text(
+                                    credits.join(' · '),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: lineStyle,
+                                  ),
+                                ],
                               ],
-                              if (credits.isNotEmpty && focusedEpisode == null) ...[
-                                SizedBox(height: 10 * m.scale),
-                                Text(
-                                  credits.join(' · '),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: lineStyle,
-                                ),
-                              ],
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
               SizedBox(height: 20 * m.scale),
-              SizedBox(height: nocturneActionSize * scale, child: _buildActionButtons(metadata)),
+              SizedBox(height: nocturneActionSize * m.scale, child: _buildActionButtons(metadata)),
             ],
           ),
         ),
       ),
     );
+  }
+
+  /// The light tail of the Play pill: the quality of a movie or episode
+  /// ("4K · Dolby Vision"), or for a show the episode it starts and the time
+  /// left in it ("S2E4 · 23 min left").
+  String? _nocturnePlayDetail(MediaItem metadata, String episodeLabel) {
+    if (metadata.isShow) {
+      final episode = _showPlayEpisode();
+      final timeLeft = episode == null ? null : nocturneTimeLeft(_fresh(episode));
+      final parts = [if (episodeLabel.isNotEmpty) episodeLabel, ?timeLeft];
+      return parts.isEmpty ? null : parts.join(' · ');
+    }
+    if (metadata.isSeason) return null;
+    if (metadata.hasActiveProgress) return nocturneTimeLeft(metadata);
+    final quality = buildMediaQualityLabels(metadata).take(2).toList();
+    return quality.isEmpty ? null : quality.join(' · ');
   }
 
   /// Seasons as chips over a vertical list of episodes, wired to the same
@@ -157,6 +179,8 @@ extension _NocturneMediaDetail on _MediaDetailScreenState {
       clientFor: (_) => _getArtworkMediaClient(context),
       hideSpoilers: SettingsService.instance.read(SettingsService.hideSpoilers),
       initialEpisodeId: _tvDetailInitialItemId(metadata),
+      // Season hubs follow _seasons one to one; a lone episode hub has none.
+      unwatchedCountOf: seasons.length == _seasons.length ? (index) => _fresh(_seasons[index]).unwatchedCount : null,
       onSeasonSelected: (hub, index) => _handleTvDetailHubChanged(hub, hubs.indexOf(hub)),
       onEpisodeFocused: (hub, episode) {
         _setTvDetailActionRowFocus(false);
