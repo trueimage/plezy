@@ -70,8 +70,7 @@ abstract final class NocturneTheme {
         .withColor(MonoPaletteSlot.accent, options.accent.color);
   }
 
-  /// The full theme spec for [options], or for the palette of a Nocturne
-  /// theme the caller already resolved.
+  /// The full theme spec for [options].
   static PlezyThemeSpec spec([NocturneOptions options = NocturneOptions.defaults]) {
     final palette = paletteFor(options);
     return PlezyThemeSpec(

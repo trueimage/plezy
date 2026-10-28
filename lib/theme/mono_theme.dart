@@ -251,7 +251,7 @@ class MonoMetrics {
     this.expressive = const Duration(milliseconds: 350),
   });
 
-  /// What every built-in theme carries.
+  /// The shared default radii, spacing and motion.
   static const classic = MonoMetrics();
 
   final double radiusXs;

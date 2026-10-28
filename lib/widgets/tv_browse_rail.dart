@@ -2442,7 +2442,7 @@ class _HubArtworkDim extends Animation<double> {
 }
 
 /// A card's artwork dim when the theme also dims the focused card's
-/// siblings: the hub's dim, plus [alpha] while another card of this row is
+/// siblings: the hub's dim, plus [_alpha] while another card of this row is
 /// focused. It listens only while its image does, and notifies only when its
 /// own sibling state flips, so a move along the row repaints two cards.
 class _SiblingArtworkDim extends Animation<double>

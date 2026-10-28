@@ -180,6 +180,11 @@ sudo moss pad plezy
 - Settings import/export
 - Localized in English plus 21 translations
 
+Choose the free built-in **Nocturne** theme under **Settings > Appearance > Theme** for Manrope typography and a
+cinematic layout, including a focus-driven home spotlight and vertical episode lists on TV. Selecting Nocturne
+also selects its layout. While it is selected, **Settings > Appearance** offers **True black** and **Accent**
+choices: Champagne (default), Ivory, or Ice.
+
 [^jf]: Jellyfin only.
 [^mb]: Jellyfin and Emby only.
 [^plex]: Plex only.

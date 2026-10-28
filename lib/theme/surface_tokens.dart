@@ -58,7 +58,7 @@ class ArtworkScrim {
 /// chips, dialogs, menus, skeletons and artwork overlays.
 ///
 /// Read through [SurfaceTokens.of], which falls back to [fallback] when a theme
-/// carries none. [fallback] is what every built-in theme draws.
+/// carries none.
 @immutable
 class SurfaceTokens extends ThemeExtension<SurfaceTokens> {
   const SurfaceTokens({
@@ -91,7 +91,7 @@ class SurfaceTokens extends ThemeExtension<SurfaceTokens> {
     this.badgeGrammar = BadgeGrammar.classic,
   });
 
-  /// What every built-in theme draws.
+  /// The shared default surfaces.
   static const fallback = SurfaceTokens();
 
   /// The theme's [SurfaceTokens], or [fallback] when it carries none.

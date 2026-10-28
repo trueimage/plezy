@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Which structure the app's screens are laid out in.
 enum LayoutVariant {
-  /// Plezy's own layout, drawn by every built-in theme.
+  /// Plezy's shared default layout.
   classic,
 
   /// The cinematic layout of the Nocturne theme: icon rail, focus-driven home
@@ -16,7 +16,7 @@ enum LayoutVariantSetting { auto }
 
 /// The layout a theme draws, and the measurements the [LayoutVariant.nocturne]
 /// screens are built from, at 1080p on TV (scale them with
-/// `TvLayoutConstants.scaleOf`).
+/// [PlezyLayout.designScaleOf]).
 ///
 /// Read through [PlezyLayout.of], which falls back to [classic] when a theme
 /// carries none. Only the layout branch points read it; everything else draws
@@ -25,7 +25,7 @@ enum LayoutVariantSetting { auto }
 class PlezyLayout extends ThemeExtension<PlezyLayout> {
   const PlezyLayout({this.variant = LayoutVariant.classic});
 
-  /// What every built-in theme draws.
+  /// The shared default layout.
   static const classic = PlezyLayout();
 
   static const nocturne = PlezyLayout(variant: LayoutVariant.nocturne);
@@ -36,7 +36,7 @@ class PlezyLayout extends ThemeExtension<PlezyLayout> {
   /// Whether the theme in [context] draws the Nocturne layout.
   static bool isNocturne(BuildContext context) => of(context).variant == LayoutVariant.nocturne;
 
-  /// Device pixels per design pixel on TV: the layout's lengths are drawn at
+  /// Logical pixels per design pixel on TV: the layout's lengths are drawn at
   /// 1080p, so a 960x540 dp TV draws them at half size. Unlike the classic
   /// TV scale, it is not floored at 0.85, which would draw the design at
   /// 1.7 times its proportions on the common 540 dp screen.

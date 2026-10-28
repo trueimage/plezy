@@ -59,7 +59,7 @@ enum FocusListStyle {
 /// The geometry and colours of D-pad focus: scale, ring, halo, glow and dim.
 ///
 /// Read through `FocusTheme.of(context)`, which falls back to [fallback] when a
-/// theme carries none. [fallback] is the focus every built-in theme draws.
+/// theme carries none.
 @immutable
 class FocusTokens extends ThemeExtension<FocusTokens> {
   const FocusTokens({
@@ -88,7 +88,7 @@ class FocusTokens extends ThemeExtension<FocusTokens> {
     this.highContrast,
   });
 
-  /// The focus every built-in theme draws.
+  /// The shared default focus.
   static const fallback = FocusTokens();
 
   static const defaultGlow = [
