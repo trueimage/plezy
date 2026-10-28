@@ -804,8 +804,30 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
 
   _HubArtworkDim _artworkDimForHub(BuildContext context, int hubIndex) => _artworkDims.putIfAbsent(
     hubIndex,
-    () => _HubArtworkDim(_focusModel, hubIndex, vsync: this, duration: FocusTheme.getAnimationDuration(context)),
+    () => _HubArtworkDim(
+      _focusModel,
+      hubIndex,
+      vsync: this,
+      duration: FocusTheme.getAnimationDuration(context),
+      alpha: _otherRowsDimAlpha(context),
+    ),
   );
+
+  /// The theme's dim of rows other than the focused one, as a scrim alpha;
+  /// themes that leave [FocusTokens.dimOtherRows] at 1 keep the rail's own.
+  static double _otherRowsDimAlpha(BuildContext context) {
+    final dim = FocusTheme.of(context).dimOtherRows;
+    return dim < 1 ? 1 - dim : _inactiveArtworkDimAlpha;
+  }
+
+  /// The artwork dim of the card at [itemIndex]: its hub's, plus the theme's
+  /// sibling dim while another card of the same row holds focus.
+  Animation<double> _artworkDimForCard(BuildContext context, int hubIndex, int itemIndex) {
+    final hubDim = _artworkDimForHub(context, hubIndex);
+    final siblings = FocusTheme.of(context).dimSiblings;
+    if (siblings >= 1) return hubDim;
+    return _SiblingArtworkDim(hubDim, _focusModel, hubIndex, itemIndex, alpha: 1 - siblings);
+  }
 
   KeyEventResult _handleKeyEvent(FocusNode _, KeyEvent event) {
     final key = event.logicalKey;
@@ -1868,7 +1890,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
     required double scale,
     required bool fullCardLayout,
   }) {
-    final artworkDim = _artworkDimForHub(context, hubIndex);
+    final artworkDim = _artworkDimForCard(context, hubIndex, itemIndex);
     return metrics.isPersonHub
         ? MergeSemantics(
             child: _buildPersonCard(
@@ -2331,8 +2353,13 @@ class _RailFocusModel extends ChangeNotifier {
 /// A single controller avoids one ticker per card while each image repaints
 /// through its own render object, without a row-sized overlay or save layer.
 class _HubArtworkDim extends Animation<double> {
-  _HubArtworkDim(this._focusModel, this._hubIndex, {required TickerProvider vsync, required Duration duration})
-    : _duration = duration {
+  _HubArtworkDim(
+    this._focusModel,
+    this._hubIndex, {
+    required TickerProvider vsync,
+    required Duration duration,
+    required this._alpha,
+  }) : _duration = duration {
     _target = _resolveTarget();
     _controller = AnimationController(vsync: vsync, duration: duration, value: _target);
     _focusModel.addListener(_handleFocusChange);
@@ -2341,6 +2368,7 @@ class _HubArtworkDim extends Animation<double> {
   final _RailFocusModel _focusModel;
   final int _hubIndex;
   final Duration _duration;
+  final double _alpha;
   late final AnimationController _controller;
   late double _target;
 
@@ -2358,7 +2386,7 @@ class _HubArtworkDim extends Animation<double> {
   }
 
   @override
-  double get value => _controller.value * _inactiveArtworkDimAlpha;
+  double get value => _controller.value * _alpha;
 
   @override
   AnimationStatus get status => _controller.status;
@@ -2379,4 +2407,49 @@ class _HubArtworkDim extends Animation<double> {
     _focusModel.removeListener(_handleFocusChange);
     _controller.dispose();
   }
+}
+
+/// A card's artwork dim when the theme also dims the focused card's
+/// siblings: the hub's dim, plus [alpha] while another card of this row is
+/// focused. It listens only while its image does, and notifies only when its
+/// own sibling state flips, so a move along the row repaints two cards.
+class _SiblingArtworkDim extends Animation<double>
+    with AnimationLazyListenerMixin, AnimationLocalListenersMixin, AnimationLocalStatusListenersMixin {
+  _SiblingArtworkDim(this._hub, this._focusModel, this._hubIndex, this._itemIndex, {required this._alpha});
+
+  final _HubArtworkDim _hub;
+  final _RailFocusModel _focusModel;
+  final int _hubIndex;
+  final int _itemIndex;
+  final double _alpha;
+  bool _sibling = false;
+
+  bool _resolveSibling() =>
+      _focusModel.railHasFocus && _focusModel.hubIndex == _hubIndex && _focusModel.position.$2 != _itemIndex;
+
+  void _handleFocusChange() {
+    final next = _resolveSibling();
+    if (next == _sibling) return;
+    _sibling = next;
+    notifyListeners();
+  }
+
+  @override
+  void didStartListening() {
+    _sibling = _resolveSibling();
+    _hub.addListener(notifyListeners);
+    _focusModel.addListener(_handleFocusChange);
+  }
+
+  @override
+  void didStopListening() {
+    _hub.removeListener(notifyListeners);
+    _focusModel.removeListener(_handleFocusChange);
+  }
+
+  @override
+  double get value => _hub.value + (_sibling ? _alpha : 0);
+
+  @override
+  AnimationStatus get status => _hub.status;
 }
