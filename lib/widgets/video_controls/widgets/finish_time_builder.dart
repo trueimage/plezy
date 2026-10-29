@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 
 import '../../../mpv/mpv.dart';
+import '../../../utils/wall_clock.dart';
 
 /// Builds with the wall-clock minute at which playback would end if it ran
 /// from now — `now + (duration - position) / rate`, truncated to the minute —
@@ -18,7 +19,7 @@ import '../../../mpv/mpv.dart';
 ///
 /// [builder] runs when the displayed minute changes or the parent rebuilds.
 class FinishTimeBuilder extends StatefulWidget {
-  const FinishTimeBuilder({super.key, required this.player, required this.builder, this.now = DateTime.now});
+  const FinishTimeBuilder({super.key, required this.player, required this.builder, this.now = wallClockNow});
 
   final Player player;
 
