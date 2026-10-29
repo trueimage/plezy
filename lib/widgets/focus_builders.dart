@@ -3,6 +3,7 @@ import '../focus/focus_chrome.dart';
 import '../focus/focus_theme.dart';
 import '../focus/input_mode_tracker.dart';
 import 'clickable_cursor.dart';
+import '../theme/surface_tokens.dart';
 
 /// Shared builders for focusable widgets to reduce code duplication.
 ///
@@ -21,7 +22,7 @@ class FocusBuilders {
   /// - [onTap]: Callback for tap/click events
   /// - [padding]: Padding inside the chip
   /// - [backgroundColor]: Background color for the chip
-  /// - [borderRadius]: Border radius for the chip (defaults to 20)
+  /// - [borderRadius]: Border radius for the chip; null uses [SurfaceTokens.chipRadius]
   /// - [child]: The content to display inside the chip
   static Widget buildFocusableChip({
     required BuildContext context,
@@ -32,10 +33,11 @@ class FocusBuilders {
     bool? selected,
     required EdgeInsetsGeometry padding,
     required Color backgroundColor,
-    double borderRadius = 20,
+    double? borderRadius,
     required Widget child,
   }) {
     final duration = FocusTheme.getAnimationDuration(context);
+    final radius = borderRadius ?? SurfaceTokens.of(context).chipRadius;
 
     return Focus(
       focusNode: focusNode,
@@ -53,7 +55,7 @@ class FocusBuilders {
               duration: duration,
               curve: Curves.easeOutCubic,
               padding: padding,
-              decoration: BoxDecoration(color: backgroundColor, borderRadius: BorderRadius.circular(borderRadius)),
+              decoration: BoxDecoration(color: backgroundColor, borderRadius: BorderRadius.circular(radius)),
               child: child,
             ),
           ),
@@ -82,8 +84,8 @@ class FocusBuilders {
     required bool isFocused,
     VoidCallback? onTap,
     VoidCallback? onLongPress,
-    double borderRadius = FocusTheme.defaultBorderRadius,
-    double focusScale = FocusTheme.focusScale,
+    double? borderRadius,
+    double? focusScale,
     bool useFocusGlow = false,
     bool delegateFocusBorder = false,
 
@@ -108,7 +110,7 @@ class FocusBuilders {
 
     final duration = FocusTheme.getAnimationDuration(context);
     final focusedWidget = AnimatedScale(
-      scale: isFocused ? focusScale : 1.0,
+      scale: isFocused ? focusScale ?? FocusTheme.of(context).wideScale : 1.0,
       duration: duration,
       curve: Curves.easeOutCubic,
       child: buildFocusChrome(

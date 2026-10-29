@@ -109,8 +109,8 @@ class FocusableWrapper extends StatefulWidget {
   /// Optional external FocusNode for programmatic focus control.
   final FocusNode? focusNode;
 
-  /// Border radius for the focus indicator.
-  final double borderRadius;
+  /// Border radius for the focus indicator; null uses the theme's.
+  final double? borderRadius;
 
   /// Per-corner radii for the focus indicator; overrides [borderRadius] when
   /// set (M3E grouped cards: large outer / small inner corners).
@@ -167,7 +167,8 @@ class FocusableWrapper extends StatefulWidget {
   /// Useful for elements like sliders where scaling looks odd.
   final bool disableScale;
 
-  final double focusScale;
+  /// Scale of the focused widget; null uses the theme's `wideScale`.
+  final double? focusScale;
 
   /// Whether to draw a glow around the focused widget.
   final bool useFocusGlow;
@@ -201,7 +202,7 @@ class FocusableWrapper extends StatefulWidget {
     this.onBack,
     this.autofocus = false,
     this.focusNode,
-    this.borderRadius = FocusTheme.defaultBorderRadius,
+    this.borderRadius,
     this.borderRadii,
     this.autoScroll = true,
     this.scrollAlignment = 0.5,
@@ -216,7 +217,7 @@ class FocusableWrapper extends StatefulWidget {
     this.useBackgroundFocus = false,
     this.focusColor,
     this.disableScale = false,
-    this.focusScale = FocusTheme.focusScale,
+    this.focusScale,
     this.useFocusGlow = false,
     this.delegateFocusBorder = false,
     this.descendantsAreFocusable = true,
@@ -236,6 +237,9 @@ class _FocusableWrapperState extends State<FocusableWrapper> with SingleTickerPr
   // hundreds of these wrappers and must not pay for a Ticker per card.
   AnimationController? _animationController;
   Animation<double>? _scaleAnimation;
+
+  /// The scale [_scaleAnimation] ends at, resolved against the theme in build.
+  double _focusScale = FocusTheme.focusScale;
 
   final _selectLongPress = DpadSelectLongPressController();
 
@@ -262,7 +266,7 @@ class _FocusableWrapperState extends State<FocusableWrapper> with SingleTickerPr
   Animation<double> _createScaleAnimation(AnimationController controller) {
     return Tween<double>(
       begin: 1.0,
-      end: widget.focusScale,
+      end: _focusScale,
     ).animate(CurvedAnimation(parent: controller, curve: Curves.easeOutCubic));
   }
 
@@ -276,13 +280,6 @@ class _FocusableWrapperState extends State<FocusableWrapper> with SingleTickerPr
 
     if (widget.canRequestFocus != oldWidget.canRequestFocus) {
       _focusNode.canRequestFocus = widget.canRequestFocus;
-    }
-
-    if (widget.focusScale != oldWidget.focusScale) {
-      final controller = _animationController;
-      if (controller != null) {
-        _scaleAnimation = _createScaleAnimation(controller);
-      }
     }
   }
 
@@ -520,6 +517,12 @@ class _FocusableWrapperState extends State<FocusableWrapper> with SingleTickerPr
       inner = widget.child;
     } else {
       final duration = FocusTheme.getAnimationDuration(context);
+      final focusScale = widget.focusScale ?? FocusTheme.of(context).wideScale;
+      if (focusScale != _focusScale) {
+        _focusScale = focusScale;
+        final controller = _animationController;
+        if (controller != null) _scaleAnimation = _createScaleAnimation(controller);
+      }
       final controller = _ensureAnimationController();
       if (controller.duration != duration) {
         controller.duration = duration;

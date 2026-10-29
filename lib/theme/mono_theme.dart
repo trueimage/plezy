@@ -2,8 +2,12 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../focus/focus_tokens.dart';
 import 'gapped_track_shape.dart';
 import 'mono_tokens.dart';
+import 'plezy_theme_spec.dart';
+import 'surface_tokens.dart';
+import 'type_scale.dart';
 
 /// One of the six colours a [MonoPalette] holds. [id] is the key the custom
 /// theme persists the colour under.
@@ -219,15 +223,19 @@ class MonoPalette {
   int get hashCode => Object.hash(bg, surface, outline, text, textMuted, accent);
 }
 
-final Map<({MonoPalette palette, TargetPlatform platform}), ThemeData> _monoThemeCache = {};
+final Map<({PlezyThemeSpec spec, TargetPlatform platform}), ThemeData> _monoThemeCache = {};
 
-ThemeData monoTheme(MonoPalette palette) {
+/// The theme for [palette] with the shared default style.
+ThemeData monoTheme(MonoPalette palette) => monoThemeFromSpec(PlezyThemeSpec(palette));
+
+/// The theme [spec] describes, memoised per spec and platform.
+ThemeData monoThemeFromSpec(PlezyThemeSpec spec) {
   // ThemeData derives several defaults from defaultTargetPlatform.
-  final key = (palette: palette, platform: defaultTargetPlatform);
+  final key = (spec: spec, platform: defaultTargetPlatform);
   final cached = _monoThemeCache[key];
   if (cached != null) return cached;
 
-  final theme = _buildMonoTheme(palette, platform: key.platform);
+  final theme = _buildMonoTheme(spec, platform: key.platform);
   _monoThemeCache[key] = theme;
   return theme;
 }
@@ -235,9 +243,11 @@ ThemeData monoTheme(MonoPalette palette) {
 /// [monoTheme] without the cache, for a palette that changes every frame: the
 /// custom theme editor's live preview would otherwise keep every intermediate
 /// palette's theme alive.
-ThemeData monoThemeUncached(MonoPalette palette) => _buildMonoTheme(palette, platform: defaultTargetPlatform);
+ThemeData monoThemeUncached(MonoPalette palette) =>
+    _buildMonoTheme(PlezyThemeSpec(palette), platform: defaultTargetPlatform);
 
-ThemeData _buildMonoTheme(MonoPalette c, {required TargetPlatform platform}) {
+ThemeData _buildMonoTheme(PlezyThemeSpec spec, {required TargetPlatform platform}) {
+  final c = spec.palette;
   final brightness = c.brightness;
   final onAccent = c.onAccent;
   final clickableCursor = WidgetStateProperty.resolveWith<MouseCursor>(
@@ -259,47 +269,52 @@ ThemeData _buildMonoTheme(MonoPalette c, {required TargetPlatform platform}) {
     shape: const WidgetStatePropertyAll(StadiumBorder()),
   );
 
+  final colorScheme = ColorScheme(
+    brightness: brightness,
+    // Accent: everything Material derives from primary (switches, sliders,
+    // progress, checkboxes, text selection, text buttons, selected list
+    // tiles) plus the widgets that read primary for selection and focus.
+    primary: c.accent,
+    onPrimary: onAccent,
+    // Elevation tint stays on the neutral text colour so dialogs and menus
+    // keep the palette's surfaces rather than picking up the accent hue.
+    surfaceTint: c.text,
+    secondary: c.text,
+    onSecondary: c.bg,
+    surface: c.surface,
+    onSurface: c.text,
+    error: const Color(0xFFB00020),
+    onError: Colors.white,
+    tertiary: c.text,
+    onTertiary: c.bg,
+    primaryContainer: c.surface,
+    onPrimaryContainer: c.text,
+    secondaryContainer: c.surface,
+    onSecondaryContainer: c.text,
+    surfaceContainerHighest: c.surface,
+    surfaceContainerLow: c.bg,
+    surfaceDim: c.bg,
+    surfaceBright: c.surface,
+    outline: c.outline,
+    shadow: Colors.transparent,
+    scrim: Colors.black,
+    inverseSurface: c.text,
+    onInverseSurface: c.bg,
+    inversePrimary: c.bg,
+  );
+  final surfaces = spec.surfaces ?? SurfaceTokens.fallback;
+  final type = spec.type ?? TypeScale.fallback;
+
   final base = ThemeData(
     platform: platform,
     useMaterial3: true,
     brightness: brightness,
+    fontFamily: type.fontFamily,
     // Linux resolves UI text through fontconfig, which on a minimal desktop
     // may have no CJK font at all; the bundled subtitle fonts (pubspec
     // `fonts:`) cover it. Other platforms keep their native CJK fonts.
     fontFamilyFallback: platform == TargetPlatform.linux ? const ['Go Noto Current', 'Go Noto Current Hangul'] : null,
-    colorScheme: ColorScheme(
-      brightness: brightness,
-      // Accent: everything Material derives from primary (switches, sliders,
-      // progress, checkboxes, text selection, text buttons, selected list
-      // tiles) plus the widgets that read primary for selection and focus.
-      primary: c.accent,
-      onPrimary: onAccent,
-      // Elevation tint stays on the neutral text colour so dialogs and menus
-      // keep the palette's surfaces rather than picking up the accent hue.
-      surfaceTint: c.text,
-      secondary: c.text,
-      onSecondary: c.bg,
-      surface: c.surface,
-      onSurface: c.text,
-      error: const Color(0xFFB00020),
-      onError: Colors.white,
-      tertiary: c.text,
-      onTertiary: c.bg,
-      primaryContainer: c.surface,
-      onPrimaryContainer: c.text,
-      secondaryContainer: c.surface,
-      onSecondaryContainer: c.text,
-      surfaceContainerHighest: c.surface,
-      surfaceContainerLow: c.bg,
-      surfaceDim: c.bg,
-      surfaceBright: c.surface,
-      outline: c.outline,
-      shadow: Colors.transparent,
-      scrim: Colors.black,
-      inverseSurface: c.text,
-      onInverseSurface: c.bg,
-      inversePrimary: c.bg,
-    ),
+    colorScheme: colorScheme,
     // remove "Material feel"
     splashFactory: NoSplash.splashFactory,
     highlightColor: Colors.transparent,
@@ -329,9 +344,34 @@ ThemeData _buildMonoTheme(MonoPalette c, {required TargetPlatform platform}) {
       color: c.surface,
       elevation: 0,
       margin: .zero,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(14))),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(surfaces.cardRadius))),
     ),
     inputDecorationTheme: _inputDecorationTheme(c.text, c.textMuted),
+    // The Material 3 defaults, stated so a theme's [SurfaceTokens] can move
+    // them: the colours are the ones Material derives from the scheme.
+    dialogTheme: DialogThemeData(
+      backgroundColor: surfaces.overlaySurface ?? colorScheme.surfaceContainerHigh,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(surfaces.dialogRadius))),
+    ),
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: surfaces.overlaySurface ?? colorScheme.surfaceContainerLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(surfaces.modalSheetRadius)),
+      ),
+    ),
+    popupMenuTheme: PopupMenuThemeData(
+      color: surfaces.overlaySurface ?? colorScheme.surfaceContainer,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(surfaces.popupMenuRadius))),
+    ),
+    chipTheme: ChipThemeData(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(surfaces.materialChipRadius))),
+    ),
+    tabBarTheme: TabBarThemeData(indicatorColor: colorScheme.primary, dividerColor: colorScheme.outlineVariant),
+    navigationRailTheme: NavigationRailThemeData(
+      backgroundColor: colorScheme.surface,
+      indicatorColor: colorScheme.secondaryContainer,
+      indicatorShape: const StadiumBorder(),
+    ),
     elevatedButtonTheme: ElevatedButtonThemeData(style: buttonStyle),
     filledButtonTheme: FilledButtonThemeData(style: buttonStyle),
     textButtonTheme: TextButtonThemeData(style: ButtonStyle(mouseCursor: clickableCursor)),
@@ -402,6 +442,9 @@ ThemeData _buildMonoTheme(MonoPalette c, {required TargetPlatform platform}) {
         textMuted: c.textMuted,
         accent: c.accent,
       ),
+      spec.focus ?? FocusTokens.fallback,
+      surfaces,
+      type,
     ],
   );
 }

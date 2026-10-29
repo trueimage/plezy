@@ -193,11 +193,11 @@ class _TvNumberSpinnerState extends State<TvNumberSpinner> with KeyRepeatHelper<
         duration: tokens?.fast ?? const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          borderRadius: const BorderRadius.all(Radius.circular(FocusTheme.defaultBorderRadius)),
+          borderRadius: BorderRadius.all(Radius.circular(FocusTheme.of(context).radius)),
           border: Border.fromBorderSide(
             BorderSide(
               color: _isFocused && isKeyboardMode ? FocusTheme.getFocusBorderColor(context) : Colors.transparent,
-              width: FocusTheme.focusBorderWidth,
+              width: FocusTheme.of(context).ringWidth,
             ),
           ),
         ),

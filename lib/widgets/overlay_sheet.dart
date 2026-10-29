@@ -9,6 +9,7 @@ import '../focus/dpad_navigator.dart';
 import '../focus/input_mode_tracker.dart';
 import '../focus/key_event_utils.dart';
 import '../utils/platform_detector.dart';
+import '../theme/surface_tokens.dart';
 
 /// Entry in the sheet page stack.
 class _OverlaySheetEntry {
@@ -705,9 +706,8 @@ class _OverlaySheetHostState extends State<OverlaySheetHost> with SingleTickerPr
     // hit testing never depends on the sheet child's just-invalidated layout.
     final slideDirection = isTop ? -1.0 : 1.0;
     final slideDistance = size.height;
-    final borderRadius = isTop
-        ? const BorderRadius.vertical(bottom: Radius.circular(16))
-        : const BorderRadius.vertical(top: Radius.circular(16));
+    final radius = Radius.circular(SurfaceTokens.of(context).sheetRadius);
+    final borderRadius = isTop ? BorderRadius.vertical(bottom: radius) : BorderRadius.vertical(top: radius);
 
     final colorScheme = Theme.of(context).colorScheme;
 

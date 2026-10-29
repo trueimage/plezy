@@ -18,6 +18,7 @@ import '../widgets/rating_bottom_sheet.dart';
 
 import '../focus/dpad_navigator.dart';
 import '../focus/dpad_select_long_press_controller.dart';
+import '../focus/focus_theme.dart';
 import '../focus/focusable_action_bar.dart';
 import '../focus/focusable_wrapper.dart';
 import '../focus/hub_vertical_navigation.dart';
@@ -104,6 +105,8 @@ import '../widgets/tv_spotlight_background.dart';
 import '../providers/account_preferences_controller.dart';
 import '../services/playback_track_preview.dart';
 import '../utils/error_message_utils.dart';
+import '../theme/surface_tokens.dart';
+import '../theme/type_scale.dart';
 
 part 'media_detail/action_buttons.dart';
 part 'media_detail/playback_tracks_status.dart';
@@ -1230,7 +1233,11 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     final isTv = PlatformDetector.isTV();
     final textWidget = Text(
       text,
-      style: TextStyle(color: colorScheme.onSecondaryContainer, fontSize: isTv ? 16 : 13, fontWeight: .w600),
+      style: TextStyle(
+        color: colorScheme.onSecondaryContainer,
+        fontSize: TypeScale.of(context).detailChip.resolve(context, isTv: isTv),
+        fontWeight: .w600,
+      ),
     );
 
     final hasLeading = leading != null || icon != null;
@@ -1289,7 +1296,8 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     // Text merges its style over the ambient default, so measuring with the
     // bare chip style would drop the theme's font metrics.
     final ambientStyle = DefaultTextStyle.of(context).style;
-    final chipTextStyle = TextStyle(color: colorScheme.onSecondaryContainer, fontSize: 13, fontWeight: .w600);
+    final chipFontSize = TypeScale.of(context).detailChip.resolve(context, isTv: false);
+    final chipTextStyle = TextStyle(color: colorScheme.onSecondaryContainer, fontSize: chipFontSize, fontWeight: .w600);
     const chipPadding = _HeroChips.paddingH * 2; // _buildMetadataChip: horizontal padding each side
     const chipSpacing = _HeroChips.spacing; // the strip Wrap's spacing
     const iconSize = 16.0;
@@ -1380,7 +1388,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
           chipPadding +
           iconSize +
           iconGap +
-          textWidth(_userRatingChipLabel(metadata), const TextStyle(fontSize: 13, fontWeight: .w500));
+          textWidth(_userRatingChipLabel(metadata), TextStyle(fontSize: chipFontSize, fontWeight: .w500));
     }
 
     final keptUnits = [for (final slot in slots) slot.unitWidths.length];
@@ -1492,7 +1500,11 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
                     const SizedBox(width: 4),
                     Text(
                       label,
-                      style: TextStyle(color: fgColor, fontSize: 13, fontWeight: .w500),
+                      style: TextStyle(
+                        color: fgColor,
+                        fontSize: TypeScale.of(context).detailChip.resolve(context, isTv: false),
+                        fontWeight: .w500,
+                      ),
                     ),
                   ],
                 ),
@@ -3443,7 +3455,10 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     final isMobile = PlatformDetector.isMobile(context);
     final isTv = PlatformDetector.isTV();
     final theme = Theme.of(context);
-    final sectionTitleStyle = theme.textTheme.titleLarge?.copyWith(fontWeight: .bold, fontSize: isTv ? 28 : null);
+    final sectionTitleStyle = theme.textTheme.titleLarge?.copyWith(
+      fontWeight: .bold,
+      fontSize: TypeScale.of(context).sectionHeader.resolve(context, isTv: isTv),
+    );
 
     // Show loading state while fetching full metadata
     if (_isLoadingMetadata) {
@@ -3718,15 +3733,10 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
                     child: SizedBox(
                       height: MediaQuery.paddingOf(context).top + 58,
                       child: RasterizedGradient(
-                        gradient: LinearGradient(
+                        gradient: SurfaceTokens.of(context).detailTopScrim.gradient(
+                          theme.scaffoldBackgroundColor,
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [
-                            theme.scaffoldBackgroundColor.withValues(alpha: 0.8),
-                            theme.scaffoldBackgroundColor.withValues(alpha: 0.5),
-                            theme.scaffoldBackgroundColor.withValues(alpha: 0),
-                          ],
-                          stops: const [0.0, 0.3, 1.0],
                         ),
                       ),
                     ),
@@ -3920,7 +3930,8 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
         final metadataLineHeight = 22 * scale;
         final logoMetadataGap = 14 * scale;
         final summaryGap = 10 * scale;
-        final summaryFontSize = availableHeight < 260 * scale ? 16.2 * scale : 18 * scale;
+        final summarySize = TypeScale.of(context).detailSummary.tvSize!;
+        final summaryFontSize = availableHeight < 260 * scale ? summarySize * 0.9 * scale : summarySize * scale;
         final summaryLineHeight = summaryFontSize * 1.35;
         final actionHeight = _tvDetailActionSize * scale;
         final actionGap = 16 * scale;
@@ -4000,7 +4011,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
                                 titleBuilder: (context, title) => _buildDetailTitle(
                                   context,
                                   title,
-                                  fontSize: 56 * scale,
+                                  fontSize: TypeScale.of(context).detailTitle.tvSize! * scale,
                                   fontWeight: .w800,
                                   shadowBlur: 12,
                                 ),
@@ -4042,7 +4053,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
                                             overflow: .ellipsis,
                                             style: TextStyle(
                                               color: foregroundColor,
-                                              fontSize: 24 * scale,
+                                              fontSize: TypeScale.of(context).detailSubtitle.tvSize! * scale,
                                               fontWeight: .w700,
                                               height: 1.2,
                                             ),
@@ -4258,7 +4269,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
   Widget _buildTvDetailMetadataLine(BuildContext context, MediaItem metadata, double scale) {
     final textStyle = TextStyle(
       color: _tvDetailForegroundColor(context),
-      fontSize: 18 * scale,
+      fontSize: TypeScale.of(context).detailMeta.tvSize! * scale,
       fontWeight: .w700,
       letterSpacing: 0.1,
     );
@@ -4348,6 +4359,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
       fullCardLayout: svc.read(SettingsService.tvFullCardLayout),
       gridSpacing: svc.read(SettingsService.gridSpacing),
       scale: scale,
+      focusRingWidth: FocusTheme.of(context).ringWidth,
       tallPosterScale: _tvDetailTallPosterScale,
       widePosterScale: 1.0,
     );
@@ -4753,19 +4765,10 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
                     // The ramp spans the art box, not the hero, so on wide windows
                     // it keeps fading past the hero edge and the bottom of the frame
                     // dissolves behind the overview instead of being cut off.
-                    const scrimAlphas = [0.20, 0.234, 0.325, 0.453, 0.60, 0.747, 0.875, 0.985, 0.998, 1.0];
-                    const scrimXs = [0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 0.9375, 1.0];
-                    const solidStop = 0.94;
                     return RasterizedGradient(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          for (final a in scrimAlphas) bgColor.withValues(alpha: a),
-                          bgColor,
-                        ],
-                        stops: [for (final x in scrimXs) solidStop * x, 1.0],
-                      ),
+                      gradient: SurfaceTokens.of(
+                        context,
+                      ).detailHeroScrim.gradient(bgColor, begin: Alignment.topCenter, end: Alignment.bottomCenter),
                     );
                   },
                 ),

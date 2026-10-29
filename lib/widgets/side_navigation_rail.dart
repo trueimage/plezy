@@ -33,6 +33,7 @@ import '../services/fullscreen_state_manager.dart';
 import '../theme/mono_tokens.dart';
 import '../widgets/backend_badge.dart';
 import '../i18n/strings.g.dart';
+import '../theme/type_scale.dart';
 
 enum _LibraryNavSection { visible, hidden }
 
@@ -1141,7 +1142,10 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
       selectedIcon: selectedIcon,
       label: Text(
         label,
-        style: TextStyle(fontSize: 14, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400),
+        style: TextStyle(
+          fontSize: TypeScale.of(context).navLabel.sizeIn(context),
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+        ),
         overflow: .ellipsis,
         maxLines: 1,
       ),
@@ -1173,7 +1177,7 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
           Text(
             nowPlayingLabel,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: TypeScale.of(context).navLabel.sizeIn(context),
               fontWeight: .w600,
               color: t.text.withValues(alpha: t.text.a * opacity),
             ),
@@ -1182,7 +1186,10 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
           ),
           Text(
             trackTitle,
-            style: TextStyle(fontSize: 11, color: t.textMuted.withValues(alpha: t.textMuted.a * opacity)),
+            style: TextStyle(
+              fontSize: TypeScale.of(context).navCaption.sizeIn(context),
+              color: t.textMuted.withValues(alpha: t.textMuted.a * opacity),
+            ),
             overflow: .ellipsis,
             maxLines: 1,
           ),
@@ -1218,7 +1225,7 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
           ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: t.text))
           : Text(
               Translations.of(context).common.reconnect,
-              style: const TextStyle(fontSize: 14, fontWeight: .w400),
+              style: TextStyle(fontSize: TypeScale.of(context).navLabel.sizeIn(context), fontWeight: .w400),
               overflow: .ellipsis,
               maxLines: 1,
             ),
@@ -1244,7 +1251,7 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
       icon: isFullscreen ? Symbols.fullscreen_exit_rounded : Symbols.fullscreen_rounded,
       label: Text(
         label,
-        style: const TextStyle(fontSize: 14, fontWeight: .w400),
+        style: TextStyle(fontSize: TypeScale.of(context).navLabel.sizeIn(context), fontWeight: .w400),
         overflow: .ellipsis,
         maxLines: 1,
       ),
@@ -1290,7 +1297,10 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
           icon: Symbols.video_library_rounded,
           label: Text(
             Translations.of(context).navigation.libraries,
-            style: TextStyle(fontSize: 14, fontWeight: isLibrariesTabSelected ? FontWeight.w600 : FontWeight.w400),
+            style: TextStyle(
+              fontSize: TypeScale.of(context).navLabel.sizeIn(context),
+              fontWeight: isLibrariesTabSelected ? FontWeight.w600 : FontWeight.w400,
+            ),
             overflow: .ellipsis,
             maxLines: 1,
           ),
@@ -1343,7 +1353,7 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
                     padding: const EdgeInsets.all(16),
                     child: Text(
                       Translations.of(context).libraries.noLibrariesFound,
-                      style: TextStyle(fontSize: 12, color: t.textMuted),
+                      style: TextStyle(fontSize: TypeScale.of(context).navNote.sizeIn(context), color: t.textMuted),
                     ),
                   )
                 else ...[
@@ -1403,7 +1413,12 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
       iconSize: 14,
       leading: backend == null ? null : BackendBadge(backend: backend, size: 14, color: t.textMuted),
       label: serverName,
-      labelStyle: TextStyle(fontSize: 11, fontWeight: .w600, letterSpacing: 0.4, color: t.textMuted),
+      labelStyle: TextStyle(
+        fontSize: TypeScale.of(context).navSection.sizeIn(context),
+        fontWeight: .w600,
+        letterSpacing: 0.4,
+        color: t.textMuted,
+      ),
       verticalPadding: 6,
       isExpanded: !_collapsedServerGroupKeys.contains(_serverGroupStateKey(section, serverId)),
       onToggle: () => _toggleServerCollapse(section, serverId),
@@ -1426,7 +1441,11 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
       icon: Symbols.visibility_off_rounded,
       iconSize: 16,
       label: Translations.of(context).libraries.hiddenLibrariesCount(count: count),
-      labelStyle: TextStyle(fontSize: 12, fontWeight: .w500, color: t.textMuted),
+      labelStyle: TextStyle(
+        fontSize: TypeScale.of(context).navNote.sizeIn(context),
+        fontWeight: .w500,
+        color: t.textMuted,
+      ),
       verticalPadding: 8,
       isExpanded: _hiddenLibrariesExpanded,
       onToggle: () => setState(() => _hiddenLibrariesExpanded = !_hiddenLibrariesExpanded),
@@ -1519,7 +1538,7 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
           Text(
             library.title,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: TypeScale.of(context).navLibrary.sizeIn(context),
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
               color: isSelected ? t.text : t.textMuted,
             ),
@@ -1528,7 +1547,10 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
           if (showServerName)
             Text(
               library.serverName!,
-              style: TextStyle(fontSize: 9, color: t.textMuted.withValues(alpha: 0.4)),
+              style: TextStyle(
+                fontSize: TypeScale.of(context).navLibraryServer.sizeIn(context),
+                color: t.textMuted.withValues(alpha: 0.4),
+              ),
               overflow: .ellipsis,
             ),
         ],

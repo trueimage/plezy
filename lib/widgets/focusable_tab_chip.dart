@@ -4,6 +4,7 @@ import '../focus/focusable_chip_mixin.dart';
 import '../focus/input_mode_tracker.dart';
 import '../utils/platform_detector.dart';
 import 'focus_builders.dart';
+import '../theme/surface_tokens.dart';
 
 /// Horizontally scrollable host for a row of [FocusableTabChip]s.
 ///
@@ -151,6 +152,7 @@ class _FocusableTabChipState extends State<FocusableTabChip> with FocusableChipS
     );
 
     final hasImage = widget.topImage != null;
+    final surfaces = SurfaceTokens.of(context);
     return FocusBuilders.buildFocusableChip(
       context: context,
       focusNode: focusNode,
@@ -160,12 +162,12 @@ class _FocusableTabChipState extends State<FocusableTabChip> with FocusableChipS
       selected: widget.isSelected,
       padding: hasImage ? const EdgeInsets.all(8) : const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       backgroundColor: backgroundColor,
-      borderRadius: hasImage ? 12 : 20,
+      borderRadius: hasImage ? surfaces.imageChipRadius : surfaces.chipRadius,
       child: hasImage
           ? Column(
               mainAxisSize: .min,
               children: [
-                ClipRRect(borderRadius: BorderRadius.circular(6), child: widget.topImage!),
+                ClipRRect(borderRadius: BorderRadius.circular(surfaces.thumbnailRadius), child: widget.topImage!),
                 const SizedBox(height: 6),
                 label,
               ],

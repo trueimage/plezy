@@ -39,6 +39,7 @@ import 'optimized_media_image.dart';
 import 'rasterized_gradient.dart';
 import 'settings_builder.dart';
 import 'sliver_child_memo.dart';
+import '../theme/type_scale.dart';
 
 const _inactiveArtworkDimAlpha = 0.3;
 
@@ -112,7 +113,6 @@ class TvBrowseRailLayoutMetrics {
 class TvBrowseRailLayout {
   static const double compactTallPosterScale = 0.8;
   static const double compactEpisodeThumbnailScale = compactTallPosterScale;
-  static const double fullCardFocusScale = FocusTheme.fullCardFocusScale;
 
   static double scaleForSize(Size size) => TvLayoutConstants.scaleForSize(size);
 
@@ -170,8 +170,9 @@ class TvBrowseRailLayout {
     double tallPosterScale = 1.0,
     double widePosterScale = 1.0,
     bool hasLeading = false,
+    double focusRingWidth = FocusTheme.focusBorderWidth,
   }) {
-    final focusExtra = FocusTheme.focusBorderWidth * 2 * scale;
+    final focusExtra = focusRingWidth * 2 * scale;
     final railEdgePadding = focusExtra + (12 * scale);
     // Full-card rails keep their own scale-derived gutter, like full-bleed
     // grids; every other rail follows the user's grid-spacing setting, scaled
@@ -1272,6 +1273,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
                 tallPosterScale: widget.tallPosterScale,
                 widePosterScale: wideScales[i],
                 hasLeading: _hasLeadingFor(widget.hubs[i]),
+                focusRingWidth: FocusTheme.of(context).ringWidth,
               ),
           ];
           final sectionHeights = [
@@ -1540,9 +1542,12 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
     final iconColor = isActive ? colorScheme.onSurface : colorScheme.onSurface.withValues(alpha: 0.42);
     final showServerName = widget.showServerName && hub.serverName != null;
     final serverColor = colorScheme.primary.withValues(alpha: isActive ? 0.7 : 0.4);
-    final serverStyle = Theme.of(
-      context,
-    ).textTheme.titleMedium?.copyWith(color: serverColor, fontSize: 15 * scale, height: 1, fontWeight: FontWeight.w700);
+    final serverStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
+      color: serverColor,
+      fontSize: TypeScale.of(context).railServer.tvSize! * scale,
+      height: 1,
+      fontWeight: FontWeight.w700,
+    );
 
     return SizedBox(
       height: TvBrowseRailLayout.hubStripHeightForScale(scale),
@@ -1563,7 +1568,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
                         overflow: .ellipsis,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: titleColor,
-                          fontSize: 18 * scale,
+                          fontSize: TypeScale.of(context).railHeader.tvSize! * scale,
                           height: 1,
                           fontWeight: isActive ? FontWeight.w800 : FontWeight.w700,
                         ),
@@ -1808,7 +1813,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
         context: context,
         isFocused: focus.$1,
         borderRadius: tokens(context).radiusSm,
-        focusScale: fullCardLayout ? TvBrowseRailLayout.fullCardFocusScale : FocusTheme.focusScale,
+        focusScale: fullCardLayout ? FocusTheme.of(context).fullCardScale : FocusTheme.of(context).cardScale,
         useFocusGlow: fullCardLayout,
         showGlow: focus.$2,
         // The card draws the border itself (poster rect for
@@ -1963,7 +1968,12 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
                         item.displayTitle,
                         maxLines: 1,
                         overflow: .ellipsis,
-                        style: TextStyle(color: Colors.white, fontSize: 13 * scale, height: 1.1, fontWeight: .w800),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: TypeScale.of(context).railCardTitle.tvSize! * scale,
+                          height: 1.1,
+                          fontWeight: .w800,
+                        ),
                       ),
                       if (characterName != null && characterName.isNotEmpty) ...[
                         SizedBox(height: 2 * scale),
@@ -1973,7 +1983,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
                           overflow: .ellipsis,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.82),
-                            fontSize: 11 * scale,
+                            fontSize: TypeScale.of(context).railCardCaption.tvSize! * scale,
                             height: 1.1,
                             fontWeight: .w600,
                           ),
@@ -2020,7 +2030,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
               overflow: .ellipsis,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: tokens(context).text,
-                fontSize: 13 * scale,
+                fontSize: TypeScale.of(context).railCardTitle.tvSize! * scale,
                 height: 1.1,
                 fontWeight: .w700,
               ),
@@ -2033,7 +2043,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
                 overflow: .ellipsis,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: tokens(context).textMuted,
-                  fontSize: 11 * scale,
+                  fontSize: TypeScale.of(context).railCardCaption.tvSize! * scale,
                   height: 1.1,
                 ),
               ),
@@ -2164,8 +2174,9 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
         ? theme.colorScheme.primary.withValues(alpha: 0.2)
         : theme.colorScheme.surfaceContainerHighest.withValues(alpha: spinner ? 0.18 : 0.42);
 
+    final focus = FocusTheme.of(context);
     return AnimatedScale(
-      scale: isFocused ? FocusTheme.focusScale : 1.0,
+      scale: isFocused ? focus.cardScale : 1.0,
       duration: duration,
       curve: Curves.easeOutCubic,
       child: AnimatedContainer(
@@ -2176,13 +2187,8 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
         decoration: BoxDecoration(
           color: background,
           borderRadius: BorderRadius.circular(tokens(context).radiusSm),
-          border: Border.all(
-            color: isFocused ? theme.colorScheme.primary : Colors.transparent,
-            width: FocusTheme.focusBorderWidth,
-          ),
-          boxShadow: isFocused
-              ? [BoxShadow(color: theme.colorScheme.primary.withValues(alpha: 0.2), blurRadius: 18, spreadRadius: 1)]
-              : null,
+          border: Border.all(color: isFocused ? theme.colorScheme.primary : Colors.transparent, width: focus.ringWidth),
+          boxShadow: isFocused ? FocusTheme.glowShadows(focus.tileGlow, theme.colorScheme.primary) : null,
         ),
         child: spinner
             ? Center(
@@ -2206,7 +2212,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
                         overflow: .ellipsis,
                         style: TextStyle(
                           color: foreground,
-                          fontSize: (13 * scale).clamp(12, 16).toDouble(),
+                          fontSize: (TypeScale.of(context).railAction.tvSize! * scale).clamp(12, 16).toDouble(),
                           fontWeight: .w800,
                           letterSpacing: 0.1,
                         ),
