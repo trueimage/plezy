@@ -208,6 +208,16 @@
     "forestTheme": "Орман",
     "plumTheme": "Алхоры",
     "paperTheme": "Қағаз",
+    "nocturneTheme": "",
+    "nocturneThemeDescription": "",
+    "nocturneSettings": "",
+    "nocturneAccent": "",
+    "nocturneAccentDescription": "",
+    "nocturneAccentChampagne": "",
+    "nocturneAccentIvory": "",
+    "nocturneAccentIce": "",
+    "nocturneTrueBlack": "",
+    "nocturneTrueBlackDescription": "",
     "libraryDensity": "Кітапхана тығыздығы",
     "displayScale": "Дисплей масштабы",
     "compact": "Тығыз",
@@ -2559,5 +2569,15 @@
     "openAsProfile": "",
     "copy": "",
     "copied": ""
+  },
+  "nocturne": {
+    "details": "",
+    "nextUp": "",
+    "watched": "",
+    "versions": "",
+    "versionsButton": "",
+    "trailer": "",
+    "newCount": "",
+    "directedBy": ""
   }
 }

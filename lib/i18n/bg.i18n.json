@@ -208,6 +208,16 @@
     "forestTheme": "Гора",
     "plumTheme": "Слива",
     "paperTheme": "Хартия",
+    "nocturneTheme": "",
+    "nocturneThemeDescription": "",
+    "nocturneSettings": "",
+    "nocturneAccent": "",
+    "nocturneAccentDescription": "",
+    "nocturneAccentChampagne": "",
+    "nocturneAccentIvory": "",
+    "nocturneAccentIce": "",
+    "nocturneTrueBlack": "",
+    "nocturneTrueBlackDescription": "",
     "libraryDensity": "Плътност на библиотеката",
     "displayScale": "Мащаб на дисплея",
     "compact": "Компактна",
@@ -2559,5 +2569,15 @@
     "openAsProfile": "",
     "copy": "",
     "copied": ""
+  },
+  "nocturne": {
+    "details": "",
+    "nextUp": "",
+    "watched": "",
+    "versions": "",
+    "versionsButton": "",
+    "trailer": "",
+    "newCount": "",
+    "directedBy": ""
   }
 }

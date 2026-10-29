@@ -83,6 +83,31 @@ class FocusTheme {
     );
   }
 
+  /// The dark hairline drawn just outside the focus ring of [focusDecoration]
+  /// so a light ring stays legible on light artwork; the theme's
+  /// [FocusTokens.haloWidth] and [FocusTokens.haloColor].
+  static BoxDecoration focusHaloDecoration(
+    BuildContext context, {
+    required bool isFocused,
+    double? borderRadius,
+    BorderRadius? radii,
+  }) {
+    final focus = of(context);
+    final halo = focus.haloWidth;
+    // Where the ring ends, measured from the shape's edge: nothing for an
+    // inside ring, its whole width for an outside one.
+    final ringOutset = focus.ringWidth * (focus.ringStrokeAlign + 1) / 2;
+    return BoxDecoration(
+      borderRadius: radii ?? BorderRadius.circular(borderRadius ?? focus.radius),
+      border: Border.all(
+        color: isFocused ? focus.haloColor : Colors.transparent,
+        width: halo,
+        // Centred half a hairline beyond the ring.
+        strokeAlign: (2 * ringOutset + halo) / halo,
+      ),
+    );
+  }
+
   /// The focus glow around a card as a list of [BoxShadow]s.
   ///
   /// Rendered by [FocusGlowOverlay] in the root overlay so the glow paints

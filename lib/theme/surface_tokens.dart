@@ -58,7 +58,7 @@ class ArtworkScrim {
 /// chips, dialogs, menus, skeletons and artwork overlays.
 ///
 /// Read through [SurfaceTokens.of], which falls back to [fallback] when a theme
-/// carries none. [fallback] is what every built-in theme draws.
+/// carries none.
 @immutable
 class SurfaceTokens extends ThemeExtension<SurfaceTokens> {
   const SurfaceTokens({
@@ -88,9 +88,10 @@ class SurfaceTokens extends ThemeExtension<SurfaceTokens> {
     this.labelBadgeColor = const Color.from(alpha: 0.76, red: 0, green: 0, blue: 0),
     this.labelBadgeRadius = 4,
     this.progressHeight,
+    this.badgeGrammar = BadgeGrammar.classic,
   });
 
-  /// What every built-in theme draws.
+  /// The shared default surfaces.
   static const fallback = SurfaceTokens();
 
   /// The theme's [SurfaceTokens], or [fallback] when it carries none.
@@ -215,6 +216,9 @@ class SurfaceTokens extends ThemeExtension<SurfaceTokens> {
   /// size preset's.
   final double? progressHeight;
 
+  /// Which badges artwork carries and where.
+  final BadgeGrammar badgeGrammar;
+
   @override
   SurfaceTokens copyWith({
     double? posterRadius,
@@ -243,6 +247,7 @@ class SurfaceTokens extends ThemeExtension<SurfaceTokens> {
     Color? labelBadgeColor,
     double? labelBadgeRadius,
     double? progressHeight,
+    BadgeGrammar? badgeGrammar,
   }) => SurfaceTokens(
     posterRadius: posterRadius ?? this.posterRadius,
     cardRadius: cardRadius ?? this.cardRadius,
@@ -270,6 +275,7 @@ class SurfaceTokens extends ThemeExtension<SurfaceTokens> {
     labelBadgeColor: labelBadgeColor ?? this.labelBadgeColor,
     labelBadgeRadius: labelBadgeRadius ?? this.labelBadgeRadius,
     progressHeight: progressHeight ?? this.progressHeight,
+    badgeGrammar: badgeGrammar ?? this.badgeGrammar,
   );
 
   /// Numbers and colours interpolate; scrims and shadows, which have no
@@ -308,6 +314,7 @@ class SurfaceTokens extends ThemeExtension<SurfaceTokens> {
       labelBadgeColor: c(labelBadgeColor, other.labelBadgeColor)!,
       labelBadgeRadius: d(labelBadgeRadius, other.labelBadgeRadius),
       progressHeight: nd(progressHeight, other.progressHeight),
+      badgeGrammar: snap(badgeGrammar, other.badgeGrammar),
     );
   }
 
@@ -339,7 +346,8 @@ class SurfaceTokens extends ThemeExtension<SurfaceTokens> {
       listEquals(other.badgeShadows, badgeShadows) &&
       other.labelBadgeColor == labelBadgeColor &&
       other.labelBadgeRadius == labelBadgeRadius &&
-      other.progressHeight == progressHeight;
+      other.progressHeight == progressHeight &&
+      other.badgeGrammar == badgeGrammar;
 
   @override
   int get hashCode => Object.hashAll([
@@ -369,5 +377,37 @@ class SurfaceTokens extends ThemeExtension<SurfaceTokens> {
     labelBadgeColor,
     labelBadgeRadius,
     progressHeight,
+    badgeGrammar,
   ]);
+}
+
+/// The badges artwork carries. Every flag is off in the classic grammar, so
+/// existing themes draw exactly what they did.
+@immutable
+class BadgeGrammar {
+  const BadgeGrammar({this.unwatchedDot = false, this.countTopLeft = false, this.reasonTag = false});
+
+  /// Classic: a check when watched, the unwatched count top-right.
+  static const classic = BadgeGrammar();
+
+  /// An accent dot top-right on an unwatched, unstarted movie.
+  final bool unwatchedDot;
+
+  /// The unwatched-episode count is an accent pill top-left, clear of the
+  /// check.
+  final bool countTopLeft;
+
+  /// A reason tag ("Next up") top-left on Continue Watching cards that
+  /// have not been started.
+  final bool reasonTag;
+
+  @override
+  bool operator ==(Object other) =>
+      other is BadgeGrammar &&
+      other.unwatchedDot == unwatchedDot &&
+      other.countTopLeft == countTopLeft &&
+      other.reasonTag == reasonTag;
+
+  @override
+  int get hashCode => Object.hash(unwatchedDot, countTopLeft, reasonTag);
 }

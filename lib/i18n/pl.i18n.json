@@ -208,6 +208,16 @@
     "forestTheme": "Las",
     "plumTheme": "Śliwka",
     "paperTheme": "Papier",
+    "nocturneTheme": "",
+    "nocturneThemeDescription": "",
+    "nocturneSettings": "",
+    "nocturneAccent": "",
+    "nocturneAccentDescription": "",
+    "nocturneAccentChampagne": "",
+    "nocturneAccentIvory": "",
+    "nocturneAccentIce": "",
+    "nocturneTrueBlack": "",
+    "nocturneTrueBlackDescription": "",
     "libraryDensity": "Gęstość biblioteki",
     "displayScale": "Skalowanie",
     "compact": "Kompaktowy",
@@ -2583,5 +2593,15 @@
     "openAsProfile": "",
     "copy": "",
     "copied": ""
+  },
+  "nocturne": {
+    "details": "",
+    "nextUp": "",
+    "watched": "",
+    "versions": "",
+    "versionsButton": "",
+    "trailer": "",
+    "newCount": "",
+    "directedBy": ""
   }
 }

@@ -208,6 +208,16 @@
     "forestTheme": "Oʻrmon",
     "plumTheme": "Olxoʻri",
     "paperTheme": "Qogʻoz",
+    "nocturneTheme": "",
+    "nocturneThemeDescription": "",
+    "nocturneSettings": "",
+    "nocturneAccent": "",
+    "nocturneAccentDescription": "",
+    "nocturneAccentChampagne": "",
+    "nocturneAccentIvory": "",
+    "nocturneAccentIce": "",
+    "nocturneTrueBlack": "",
+    "nocturneTrueBlackDescription": "",
     "libraryDensity": "Kutubxona zichligi",
     "displayScale": "Ekran miqyosi",
     "compact": "Ixcham",
@@ -2559,5 +2569,15 @@
     "openAsProfile": "",
     "copy": "",
     "copied": ""
+  },
+  "nocturne": {
+    "details": "",
+    "nextUp": "",
+    "watched": "",
+    "versions": "",
+    "versionsButton": "",
+    "trailer": "",
+    "newCount": "",
+    "directedBy": ""
   }
 }

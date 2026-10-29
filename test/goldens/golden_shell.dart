@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plezy/media/media_library.dart';
 import 'package:plezy/navigation/navigation_tabs.dart';
 import 'package:plezy/providers/hidden_libraries_provider.dart';
 import 'package:plezy/providers/libraries_provider.dart';
@@ -14,21 +15,32 @@ import 'package:plezy/widgets/media_card_sliver_layout.dart';
 import 'package:plezy/widgets/overlay_sheet.dart';
 import 'package:plezy/widgets/side_navigation_rail.dart';
 import 'package:provider/provider.dart';
+import 'package:provider/single_child_widget.dart';
 
 import '../test_helpers/multi_server_fixtures.dart';
 import 'golden_fixtures.dart';
 import 'golden_harness.dart';
 
 /// Pumps [GoldenShell] with the providers the navigation needs.
-Future<void> pumpGoldenShell(WidgetTester tester, GoldenCase golden, {FocusNode? firstCardFocusNode}) async {
+Future<void> pumpGoldenShell(
+  WidgetTester tester,
+  GoldenCase golden, {
+  FocusNode? firstCardFocusNode,
+  Widget? content,
+  NavigationTabId selectedTab = NavigationTabId.libraries,
+  List<SingleChildWidget> providers = const [],
+  MultiServerProvider? multiServerProvider,
+  List<MediaLibrary>? libraries,
+  bool settle = true,
+}) async {
   final librariesProvider = LibrariesProvider();
-  await librariesProvider.updateLibraryOrder(goldenLibraries);
+  await librariesProvider.updateLibraryOrder(libraries ?? goldenLibraries);
   addTearDown(librariesProvider.dispose);
   final hiddenLibrariesProvider = HiddenLibrariesProvider();
   await hiddenLibrariesProvider.ensureInitialized();
   addTearDown(hiddenLibrariesProvider.dispose);
-  final multiServerProvider = testMultiServerProvider(MultiServerManager());
-  addTearDown(multiServerProvider.dispose);
+  final multiServer = multiServerProvider ?? testMultiServerProvider(MultiServerManager());
+  if (multiServerProvider == null) addTearDown(multiServer.dispose);
 
   await pumpGoldenApp(
     tester,
@@ -36,9 +48,11 @@ Future<void> pumpGoldenShell(WidgetTester tester, GoldenCase golden, {FocusNode?
     providers: [
       ChangeNotifierProvider<LibrariesProvider>.value(value: librariesProvider),
       ChangeNotifierProvider<HiddenLibrariesProvider>.value(value: hiddenLibrariesProvider),
-      ChangeNotifierProvider<MultiServerProvider>.value(value: multiServerProvider),
+      ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer),
+      ...providers,
     ],
-    home: GoldenShell(firstCardFocusNode: firstCardFocusNode),
+    home: GoldenShell(firstCardFocusNode: firstCardFocusNode, content: content, selectedTab: selectedTab),
+    settle: settle,
   );
 }
 
@@ -47,16 +61,20 @@ Future<void> pumpGoldenShell(WidgetTester tester, GoldenCase golden, {FocusNode?
 /// SideNavigationRail beside the content on desktop and TV, and the
 /// OverlaySheetHost around both. Honours the sidebar and nav-label settings.
 class GoldenShell extends StatelessWidget {
-  const GoldenShell({super.key, this.firstCardFocusNode});
+  const GoldenShell({super.key, this.firstCardFocusNode, this.content, this.selectedTab = NavigationTabId.libraries});
 
   final FocusNode? firstCardFocusNode;
+
+  /// The screen inside the navigation; the Movies grid when null.
+  final Widget? content;
+  final NavigationTabId selectedTab;
 
   @override
   Widget build(BuildContext context) {
     final settings = SettingsService.instance;
     final grid = Material(
       type: MaterialType.transparency,
-      child: GoldenMovieGrid(firstCardFocusNode: firstCardFocusNode),
+      child: content ?? GoldenMovieGrid(firstCardFocusNode: firstCardFocusNode),
     );
 
     if (!PlatformDetector.shouldUseSideNavigation(context)) {
@@ -65,7 +83,7 @@ class GoldenShell extends StatelessWidget {
         visibleTabs: NavigationTab.getVisibleTabs(isOffline: false),
         isMobile: true,
         isOffline: false,
-        currentTab: NavigationTabId.libraries,
+        currentTab: selectedTab,
       );
       return OverlaySheetHost(
         child: Scaffold(
@@ -73,7 +91,7 @@ class GoldenShell extends StatelessWidget {
           bottomNavigationBar: NavigationBarTheme(
             data: NavigationBarTheme.of(context).copyWith(height: hideLabels ? 56 : null),
             child: NavigationBar(
-              selectedIndex: tabs.indexWhere((tab) => tab.id == NavigationTabId.libraries),
+              selectedIndex: tabs.indexWhere((tab) => tab.id == selectedTab),
               labelBehavior: hideLabels
                   ? NavigationDestinationLabelBehavior.alwaysHide
                   : NavigationDestinationLabelBehavior.alwaysShow,
@@ -86,20 +104,37 @@ class GoldenShell extends StatelessWidget {
 
     final alwaysExpanded = settings.read(SettingsService.alwaysKeepSidebarOpen);
     final contentLeft = alwaysExpanded
-        ? SideNavigationRailState.expandedWidth
+        ? SideNavigationRailState.expandedWidthForContext(context)
         : SideNavigationRailState.collapsedWidthForContext(context);
+    final viewportWidth = MediaQuery.sizeOf(context).width;
     return OverlaySheetHost(
       child: Scaffold(
         body: Stack(
           children: [
-            Positioned(top: 0, bottom: 0, left: contentLeft, right: 0, child: grid),
+            Positioned(
+              top: 0,
+              bottom: 0,
+              left: contentLeft,
+              right: 0,
+              child: content == null
+                  ? grid
+                  : MainScreenFocusScope(
+                      focusSidebar: () {},
+                      sideNavigationWidth: contentLeft,
+                      reservedSideNavigationWidth: contentLeft,
+                      foregroundLeft: contentLeft,
+                      foregroundWidth: viewportWidth - contentLeft,
+                      viewportWidth: viewportWidth,
+                      child: grid,
+                    ),
+            ),
             Positioned(
               top: 0,
               bottom: 0,
               left: 0,
               child: SideNavigationRail(
-                selectedTab: NavigationTabId.libraries,
-                selectedLibraryKey: goldenLibraries.first.globalKey,
+                selectedTab: selectedTab,
+                selectedLibraryKey: selectedTab == NavigationTabId.libraries ? goldenLibraries.first.globalKey : null,
                 alwaysExpanded: alwaysExpanded,
                 onDestinationSelected: (_) {},
                 onLibrarySelected: (_) {},

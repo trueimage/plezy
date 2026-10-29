@@ -135,6 +135,17 @@ class MonoPalette {
     accent: Color(0xFFE29BF0),
   );
 
+  /// Nocturne's canvas, surfaces and Champagne accent; the theme's type,
+  /// focus and layout come with `NocturneTheme.spec`.
+  static const nocturne = MonoPalette(
+    bg: Color(0xFF0B0D12),
+    surface: Color(0xFF141720),
+    outline: Color(0x1FF2F3F5),
+    text: Color(0xFFF2F3F5),
+    textMuted: Color(0xA3F2F3F5),
+    accent: Color(0xFFE6C07A),
+  );
+
   /// Warm off-white paper with a deep teal accent; the light preset.
   static const paper = MonoPalette(
     bg: Color(0xFFF3F0E9),
@@ -223,6 +234,56 @@ class MonoPalette {
   int get hashCode => Object.hash(bg, surface, outline, text, textMuted, accent);
 }
 
+/// The shape, spacing and motion values a theme's [MonoTokens] carry beside its
+/// palette.
+@immutable
+class MonoMetrics {
+  const MonoMetrics({
+    this.radiusXs = 5,
+    this.radiusSm = 8,
+    this.radiusMd = 12,
+    this.radiusLg = 20,
+    this.groupGap = 2,
+    this.space = 12,
+    this.fast = const Duration(milliseconds: 120),
+    this.normal = const Duration(milliseconds: 200),
+    this.slow = const Duration(milliseconds: 300),
+    this.expressive = const Duration(milliseconds: 350),
+  });
+
+  /// The shared default radii, spacing and motion.
+  static const classic = MonoMetrics();
+
+  final double radiusXs;
+  final double radiusSm;
+  final double radiusMd;
+  final double radiusLg;
+  final double groupGap;
+  final double space;
+  final Duration fast;
+  final Duration normal;
+  final Duration slow;
+  final Duration expressive;
+
+  @override
+  bool operator ==(Object other) =>
+      other is MonoMetrics &&
+      other.radiusXs == radiusXs &&
+      other.radiusSm == radiusSm &&
+      other.radiusMd == radiusMd &&
+      other.radiusLg == radiusLg &&
+      other.groupGap == groupGap &&
+      other.space == space &&
+      other.fast == fast &&
+      other.normal == normal &&
+      other.slow == slow &&
+      other.expressive == expressive;
+
+  @override
+  int get hashCode =>
+      Object.hash(radiusXs, radiusSm, radiusMd, radiusLg, groupGap, space, fast, normal, slow, expressive);
+}
+
 final Map<({PlezyThemeSpec spec, TargetPlatform platform}), ThemeData> _monoThemeCache = {};
 
 /// The theme for [palette] with the shared default style.
@@ -304,6 +365,7 @@ ThemeData _buildMonoTheme(PlezyThemeSpec spec, {required TargetPlatform platform
   );
   final surfaces = spec.surfaces ?? SurfaceTokens.fallback;
   final type = spec.type ?? TypeScale.fallback;
+  final metrics = spec.metrics ?? MonoMetrics.classic;
 
   final base = ThemeData(
     platform: platform,
@@ -330,7 +392,13 @@ ThemeData _buildMonoTheme(PlezyThemeSpec spec, {required TargetPlatform platform
       scrolledUnderElevation: 0,
       centerTitle: false,
       foregroundColor: c.text,
-      titleTextStyle: TextStyle(color: c.text, fontSize: 18, fontWeight: .w700, letterSpacing: -0.2),
+      titleTextStyle: TextStyle(
+        color: c.text,
+        fontSize: 18,
+        fontWeight: .w700,
+        letterSpacing: -0.2,
+        fontFamily: type.fontFamily,
+      ),
     ),
     textTheme: Typography.englishLike2021
         .apply(bodyColor: c.text, displayColor: c.text)
@@ -339,14 +407,17 @@ ThemeData _buildMonoTheme(PlezyThemeSpec spec, {required TargetPlatform platform
           titleMedium: const TextStyle(fontWeight: .w600),
           bodyMedium: TextStyle(color: c.text),
           bodySmall: TextStyle(color: c.textMuted),
-        ),
+        )
+        // An explicit text theme does not take [fontFamily]; a theme with its
+        // own family states it here. Null keeps the platform face.
+        .apply(fontFamily: type.fontFamily),
     cardTheme: CardThemeData(
       color: c.surface,
       elevation: 0,
       margin: .zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(surfaces.cardRadius))),
     ),
-    inputDecorationTheme: _inputDecorationTheme(c.text, c.textMuted),
+    inputDecorationTheme: _inputDecorationTheme(c.text, c.textMuted, fontFamily: type.fontFamily),
     // The Material 3 defaults, stated so a theme's [SurfaceTokens] can move
     // them: the colours are the ones Material derives from the scheme.
     dialogTheme: DialogThemeData(
@@ -402,7 +473,7 @@ ThemeData _buildMonoTheme(PlezyThemeSpec spec, {required TargetPlatform platform
       backgroundColor: c.bg,
       elevation: 0,
       indicatorColor: Colors.transparent,
-      labelTextStyle: WidgetStatePropertyAll(TextStyle(color: c.textMuted, fontSize: 11)),
+      labelTextStyle: WidgetStatePropertyAll(TextStyle(color: c.textMuted, fontSize: 11, fontFamily: type.fontFamily)),
       iconTheme: WidgetStateProperty.resolveWith((states) {
         final active = states.contains(WidgetState.selected);
         return IconThemeData(opacity: active ? 1 : 0.6, size: 22, color: active ? c.accent : c.text);
@@ -414,7 +485,7 @@ ThemeData _buildMonoTheme(PlezyThemeSpec spec, {required TargetPlatform platform
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
       backgroundColor: c.surface,
-      contentTextStyle: TextStyle(color: c.text),
+      contentTextStyle: TextStyle(color: c.text, fontFamily: type.fontFamily),
       actionTextColor: c.text,
       elevation: 6,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
@@ -425,16 +496,16 @@ ThemeData _buildMonoTheme(PlezyThemeSpec spec, {required TargetPlatform platform
   return base.copyWith(
     extensions: [
       MonoTokens(
-        radiusSm: 8,
-        radiusMd: 12,
-        radiusLg: 20,
-        radiusXs: 5,
-        groupGap: 2,
-        space: 12,
-        fast: const Duration(milliseconds: 120),
-        normal: const Duration(milliseconds: 200),
-        slow: const Duration(milliseconds: 300),
-        expressive: const Duration(milliseconds: 350),
+        radiusSm: metrics.radiusSm,
+        radiusMd: metrics.radiusMd,
+        radiusLg: metrics.radiusLg,
+        radiusXs: metrics.radiusXs,
+        groupGap: metrics.groupGap,
+        space: metrics.space,
+        fast: metrics.fast,
+        normal: metrics.normal,
+        slow: metrics.slow,
+        expressive: metrics.expressive,
         bg: c.bg,
         surface: c.surface,
         outline: c.outline,
@@ -445,12 +516,13 @@ ThemeData _buildMonoTheme(PlezyThemeSpec spec, {required TargetPlatform platform
       spec.focus ?? FocusTokens.fallback,
       surfaces,
       type,
+      ?spec.layout,
     ],
   );
 }
 
 /// Brighter fill on focus so input focus is visible inside TV overscan.
-InputDecorationTheme _inputDecorationTheme(Color text, Color textMuted) {
+InputDecorationTheme _inputDecorationTheme(Color text, Color textMuted, {String? fontFamily}) {
   final unfocusedFill = text.withValues(alpha: 0.08);
   final focusedFill = text.withValues(alpha: 0.18);
   const border = OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide.none);
@@ -464,6 +536,6 @@ InputDecorationTheme _inputDecorationTheme(Color text, Color textMuted) {
     border: border,
     enabledBorder: border,
     focusedBorder: border,
-    hintStyle: TextStyle(color: textMuted),
+    hintStyle: TextStyle(color: textMuted, fontFamily: fontFamily),
   );
 }

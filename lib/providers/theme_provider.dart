@@ -10,6 +10,8 @@ import '../services/settings_binding_owner.dart';
 import '../services/settings_service.dart' as settings;
 import '../services/supporter/supporter_service.dart';
 import '../theme/mono_theme.dart';
+import '../theme/nocturne_theme.dart';
+import '../theme/plezy_layout.dart';
 import '../theme/plezy_theme_spec.dart';
 import '../utils/app_logger.dart';
 
@@ -27,6 +29,7 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
   late final SettingsBindingOwner _settingsBinding;
   settings.ThemeMode _storedMode = settings.ThemeMode.system;
   MonoPalette? _customPalette;
+  NocturneOptions _nocturne = NocturneOptions.defaults;
   late ThemeChoice _choice;
   late Brightness _systemBrightness;
   bool? _windowChromeDark;
@@ -43,13 +46,18 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
     _choice = _resolve();
     _supporter.addListener(_apply);
     _settingsBinding = SettingsBindingOwner(
-      prefs: [settings.SettingsService.themeMode, settings.SettingsService.customThemePalette],
+      prefs: [
+        settings.SettingsService.themeMode,
+        settings.SettingsService.customThemePalette,
+        settings.SettingsService.nocturneTrueBlack,
+        settings.SettingsService.nocturneAccent,
+      ],
       onRefresh: (service) {
-        final previous = (_storedMode, _customPalette);
+        final previous = (_storedMode, _customPalette, _nocturne);
         _readStored(service);
         // A stored change that paints the same still changes what the picker
         // shows (the saved-but-locked marker, the Custom swatch).
-        _apply(pushSplash: true, forceNotify: (_storedMode, _customPalette) != previous);
+        _apply(pushSplash: true, forceNotify: (_storedMode, _customPalette, _nocturne) != previous);
       },
     );
     unawaited(_settingsBinding.bind());
@@ -77,9 +85,10 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
   void _readStored(settings.SettingsService service) {
     _storedMode = service.read(settings.SettingsService.themeMode);
     _customPalette = service.read(settings.SettingsService.customThemePalette);
+    _nocturne = nocturneOptionsOf(service);
   }
 
-  ThemeChoice _resolve() => resolve(_storedMode, _customPalette, unlocked: _supporter.isUnlocked);
+  ThemeChoice _resolve() => resolve(_storedMode, _customPalette, unlocked: _supporter.isUnlocked, nocturne: _nocturne);
 
   /// Re-resolves after the stored choice or the Supporter entitlement changed.
   /// The stored choice is never rewritten: losing the entitlement only changes
@@ -105,11 +114,23 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
   /// The saved Custom palette, whether or not Custom is selected or unlocked.
   MonoPalette? get customPalette => _customPalette;
 
+  /// Nocturne's own settings, whether or not Nocturne is selected.
+  NocturneOptions get nocturneOptions => _nocturne;
+
+  /// The layout the screens are drawn in.
+  LayoutVariant get layoutVariant => _choice.spec?.layout?.variant ?? LayoutVariant.classic;
+
+  /// Nocturne's settings as stored in [service].
+  static NocturneOptions nocturneOptionsOf(settings.SettingsService service) => NocturneOptions(
+    trueBlack: service.read(settings.SettingsService.nocturneTrueBlack),
+    accent: service.read(settings.SettingsService.nocturneAccent),
+  );
+
   /// The saved choice while only a missing Supporter entitlement keeps it off
   /// screen, so the picker can show it is still saved; null when the saved
   /// choice is what paints, or would not paint even if unlocked.
   settings.ThemeMode? get lockedStoredThemeMode {
-    final ifUnlocked = resolve(_storedMode, _customPalette, unlocked: true).mode;
+    final ifUnlocked = resolve(_storedMode, _customPalette, unlocked: true, nocturne: _nocturne).mode;
     return ifUnlocked == _choice.mode ? null : ifUnlocked;
   }
 
@@ -121,11 +142,16 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
   /// Static so the pre-provider startup frame resolves through the same rule
   /// and never flashes a locked perk or the fallback for an unlocked one. It
   /// runs after TV detection there, like the pref default it reads.
-  static ThemeChoice resolve(settings.ThemeMode stored, MonoPalette? customPalette, {required bool unlocked}) {
+  static ThemeChoice resolve(
+    settings.ThemeMode stored,
+    MonoPalette? customPalette, {
+    required bool unlocked,
+    NocturneOptions nocturne = NocturneOptions.defaults,
+  }) {
     final locked = stored.isSupporterPerk && !unlocked;
     final missingCustom = stored == settings.ThemeMode.custom && customPalette == null;
     final mode = locked || missingCustom ? settings.SettingsService.themeMode.resolvedDefault : stored;
-    return (mode: mode, spec: specFor(mode, customPalette: customPalette));
+    return (mode: mode, spec: specFor(mode, customPalette: customPalette, nocturne: nocturne));
   }
 
   /// [resolve] for the choice stored in [service].
@@ -133,11 +159,17 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
     service.read(settings.SettingsService.themeMode),
     service.read(settings.SettingsService.customThemePalette),
     unlocked: unlocked,
+    nocturne: nocturneOptionsOf(service),
   );
 
-  /// The theme spec [mode] paints with: [paletteFor] with the shared default
-  /// style, null for System.
-  static PlezyThemeSpec? specFor(settings.ThemeMode mode, {MonoPalette? customPalette}) {
+  /// The theme spec [mode] paints with: Nocturne's whole spec, or
+  /// [paletteFor] with the shared default style; null for System.
+  static PlezyThemeSpec? specFor(
+    settings.ThemeMode mode, {
+    MonoPalette? customPalette,
+    NocturneOptions nocturne = NocturneOptions.defaults,
+  }) {
+    if (mode == settings.ThemeMode.nocturne) return NocturneTheme.spec(nocturne);
     final palette = paletteFor(mode, customPalette: customPalette);
     return palette == null ? null : PlezyThemeSpec(palette);
   }
@@ -149,6 +181,7 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
     settings.ThemeMode.light => MonoPalette.light,
     settings.ThemeMode.dark => MonoPalette.dark,
     settings.ThemeMode.oled => MonoPalette.oled,
+    settings.ThemeMode.nocturne => MonoPalette.nocturne,
     settings.ThemeMode.ember => MonoPalette.ember,
     settings.ThemeMode.glacier => MonoPalette.glacier,
     settings.ThemeMode.forest => MonoPalette.forest,
@@ -269,6 +302,10 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
   static String nativeSplashMode(MonoPalette? palette) {
     if (palette == null) return 'system';
     if (palette == MonoPalette.oled) return 'oled';
+    if (palette.bg == NocturneTheme.background && palette.surface == NocturneTheme.palette.surface) return 'nocturne';
+    if (palette.bg == NocturneTheme.trueBlackBackground && palette.surface == NocturneTheme.palette.surface) {
+      return 'oled';
+    }
     return palette.brightness == Brightness.light ? 'light' : 'dark';
   }
 
@@ -276,6 +313,7 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
     settings.ThemeMode.light => Symbols.light_mode_rounded,
     settings.ThemeMode.dark => Symbols.dark_mode_rounded,
     settings.ThemeMode.oled => Symbols.contrast_rounded,
+    settings.ThemeMode.nocturne => Symbols.movie_rounded,
     settings.ThemeMode.system => Symbols.brightness_auto_rounded,
     settings.ThemeMode.ember ||
     settings.ThemeMode.glacier ||

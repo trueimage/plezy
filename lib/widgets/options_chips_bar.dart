@@ -1,9 +1,20 @@
 import 'package:flutter/material.dart';
 
+import '../i18n/strings.g.dart';
+
+import '../theme/mono_tokens.dart';
+import '../theme/plezy_layout.dart';
 import 'focusable_filter_chip.dart';
+import 'nocturne/nocturne_spotlight.dart' show NocturneMetrics;
 
 /// Height of an [OptionsChipsBar] (padding + chip + padding).
 const double optionsChipsBarHeight = 32.0;
+
+/// Height of an [OptionsChipsBar] in this context's layout: Nocturne draws
+/// larger pills with room for the focused one's outline.
+double optionsChipsBarHeightOf(BuildContext context) => PlezyLayout.isNocturne(context)
+    ? NocturneMetrics.of(context).pick(tv: 76, desktop: 44, phone: 44)
+    : optionsChipsBarHeight;
 
 /// Describes one chip in an [OptionsChipsBar].
 ///
@@ -16,6 +27,9 @@ class OptionsChipDescriptor {
 
   /// Chip label.
   final String label;
+
+  /// Optional count after the label (e.g. active filters).
+  final int? count;
 
   /// Invoked on tap or D-pad select.
   final VoidCallback onPressed;
@@ -50,6 +64,7 @@ class OptionsChipDescriptor {
     required this.label,
     required this.onPressed,
     required this.focusNode,
+    this.count,
     this.anchorKey,
     this.onNavigateLeft,
     this.onNavigateRight,
@@ -84,6 +99,11 @@ class OptionsChipsBar extends StatelessWidget {
   /// Invoked on BACK from any chip.
   final VoidCallback? onBack;
 
+  /// The library's title and item count, which lead the bar in the
+  /// Nocturne layout (its icon rail names no library).
+  final String? title;
+  final int? itemCount;
+
   const OptionsChipsBar({
     super.key,
     required this.chips,
@@ -91,10 +111,13 @@ class OptionsChipsBar extends StatelessWidget {
     this.onNavigateUp,
     this.onNavigateLeftEdge,
     this.onBack,
+    this.title,
+    this.itemCount,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (PlezyLayout.isNocturne(context)) return _buildNocturne(context);
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -103,6 +126,51 @@ class OptionsChipsBar extends StatelessWidget {
         mainAxisSize: .min,
         children: [
           for (var i = 0; i < chips.length; i++) ...[if (i > 0) const SizedBox(width: 8), _buildChip(i)],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNocturne(BuildContext context) {
+    final m = NocturneMetrics.of(context);
+    final tk = tokens(context);
+    final gap = m.pick(tv: 12, desktop: 8, phone: 8);
+    final count = itemCount;
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: m.pick(tv: 8, desktop: 4, phone: 4)),
+      alignment: .centerLeft,
+      child: Row(
+        mainAxisSize: .min,
+        crossAxisAlignment: .center,
+        children: [
+          if (title case final title?) ...[
+            Text(
+              title,
+              maxLines: 1,
+              style: TextStyle(
+                color: tk.text,
+                fontSize: m.pick(tv: 40, desktop: 22, phone: 18),
+                fontWeight: FontWeight.w800,
+                height: 1.1,
+              ),
+            ),
+            if (count != null && count > 0) ...[
+              SizedBox(width: gap),
+              Text(
+                t.discover.titleCount(n: count),
+                maxLines: 1,
+                style: TextStyle(
+                  color: tk.textMuted,
+                  fontSize: m.caption,
+                  fontWeight: FontWeight.w500,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ],
+            SizedBox(width: gap * 2.5),
+          ],
+          for (var i = 0; i < chips.length; i++) ...[if (i > 0) SizedBox(width: gap), _buildChip(i)],
         ],
       ),
     );
@@ -117,6 +185,7 @@ class OptionsChipsBar extends StatelessWidget {
       focusNode: chip.focusNode,
       icon: chip.icon,
       label: chip.label,
+      count: chip.count,
       onPressed: chip.onPressed,
       onNavigateDown: chip.onNavigateDown ?? onNavigateDown,
       onNavigateUp: chip.onNavigateUp ?? onNavigateUp,

@@ -1,13 +1,19 @@
 import 'package:plezy/media/ids.dart';
+import 'package:plezy/media/library_filter_result.dart';
 import 'package:plezy/media/library_query.dart';
 import 'package:plezy/media/media_backend.dart';
 import 'package:plezy/media/media_hub.dart';
 import 'package:plezy/media/media_item.dart';
 import 'package:plezy/media/media_kind.dart';
 import 'package:plezy/media/media_library.dart';
+import 'package:plezy/media/media_part.dart';
+import 'package:plezy/media/media_person.dart';
+import 'package:plezy/media/media_sort.dart';
 import 'package:plezy/media/media_role.dart';
 import 'package:plezy/media/media_server_client.dart';
 import 'package:plezy/media/media_source_info.dart';
+import 'package:plezy/media/media_stream.dart';
+import 'package:plezy/media/media_version.dart';
 import 'package:plezy/media/server_capabilities.dart';
 import 'package:plezy/utils/media_server_http_client.dart';
 
@@ -79,10 +85,41 @@ MediaItem _movie(
   );
 }
 
-MediaLibrary _library(String id, String title, MediaKind kind) {
+/// A Jellyfin Movies library: its A–Z bar is the local alphabet, so the
+/// library screen draws it without a Plex first-character request.
+final List<MediaLibrary> goldenBrowseLibraries = [
+  _library('lib_movies', 'Movies', MediaKind.movie, backend: MediaBackend.jellyfin),
+  ...goldenLibraries.skip(1),
+];
+
+/// The browse library's 128 fictional films, enough for the A–Z bar, sorted
+/// by title.
+final List<MediaItem> goldenBrowseMovies = () {
+  const first = ['Amber', 'Blue', 'Cinder', 'Distant', 'Ember', 'Hollow', 'Iron', 'Lantern'];
+  const second = ['Bay', 'Coast', 'Field', 'Harbor', 'Hours', 'Light', 'Ridge', 'Road'];
+  const third = ['', ' II'];
+  final titles = [
+    for (final a in first)
+      for (final b in second)
+        for (final c in third) '$a $b$c',
+  ]..sort();
+  return [
+    for (final (i, title) in titles.indexed)
+      _movie(
+        'b$i',
+        title,
+        1990 + (i * 7) % 35,
+        durationMinutes: 84 + (i * 13) % 70,
+        viewCount: i % 5 == 2 ? 1 : null,
+        viewOffsetMinutes: i % 9 == 4 ? 30 : null,
+      ),
+  ];
+}();
+
+MediaLibrary _library(String id, String title, MediaKind kind, {MediaBackend backend = MediaBackend.plex}) {
   return MediaLibrary(
     id: id,
-    backend: MediaBackend.plex,
+    backend: backend,
     title: title,
     kind: kind,
     serverId: ServerId(goldenServerId),
@@ -118,6 +155,67 @@ final MediaItem goldenDetailMovie = testMediaItem(
   serverName: goldenServerName,
 );
 
+/// The Nocturne detail hero's movie: [goldenDetailMovie] with two versions
+/// (4K Dolby Vision with TrueHD Atmos, and 1080p) and a trailer extra, so the
+/// hero shows its media-info chips, the Versions action and the Trailer action.
+final MediaItem goldenDetailMovieWithMedia = testMediaItem(
+  id: 'detail_movie_media',
+  backend: MediaBackend.plex,
+  kind: MediaKind.movie,
+  title: goldenDetailMovie.title,
+  tagline: goldenDetailMovie.tagline,
+  summary: goldenDetailMovie.summary,
+  year: goldenDetailMovie.year,
+  contentRating: goldenDetailMovie.contentRating,
+  durationMs: goldenDetailMovie.durationMs,
+  rating: goldenDetailMovie.rating,
+  studio: goldenDetailMovie.studio,
+  genres: goldenDetailMovie.genres,
+  directors: goldenDetailMovie.directors,
+  writers: goldenDetailMovie.writers,
+  roles: goldenDetailMovie.roles,
+  mediaVersions: const [
+    MediaVersion(
+      id: 'v_4k',
+      width: 3840,
+      height: 2160,
+      videoResolution: '4k',
+      videoCodec: 'hevc',
+      parts: [
+        MediaPart(
+          id: 'p_4k',
+          streams: [
+            MediaStream(id: 's_4k_v', kind: MediaStreamKind.video, codec: 'hevc', dolbyVision: true, hdr: true),
+            MediaStream(
+              id: 's_4k_a',
+              kind: MediaStreamKind.audio,
+              codec: 'truehd',
+              channels: 8,
+              displayTitle: 'English (TrueHD Atmos 7.1)',
+              isDefault: true,
+            ),
+          ],
+        ),
+      ],
+    ),
+    MediaVersion(id: 'v_1080', width: 1920, height: 1080, videoResolution: '1080', videoCodec: 'h264'),
+  ],
+  serverId: goldenServerId,
+  serverName: goldenServerName,
+);
+
+/// [goldenDetailMovieWithMedia]'s trailer.
+final MediaItem goldenTrailer = testMediaItem(
+  id: 'detail_movie_trailer',
+  backend: MediaBackend.plex,
+  kind: MediaKind.clip,
+  title: 'Official Trailer',
+  durationMs: 2 * 60000,
+  serverId: goldenServerId,
+  serverName: goldenServerName,
+  raw: const {'ExtraType': 'Trailer'},
+);
+
 final MediaItem goldenShow = testMediaItem(
   id: 'show_1',
   backend: MediaBackend.plex,
@@ -147,6 +245,41 @@ final MediaItem goldenSeason = testMediaItem(
   serverId: goldenServerId,
   serverName: goldenServerName,
 );
+
+/// Nocturne's show page: [goldenShow] with three seasons, so the season chips
+/// show, the second one with its "4 new" count.
+final MediaItem goldenShowSeasons = testMediaItem(
+  id: 'show_seasons',
+  backend: MediaBackend.plex,
+  kind: MediaKind.show,
+  title: goldenShow.title,
+  summary: goldenShow.summary,
+  year: goldenShow.year,
+  contentRating: goldenShow.contentRating,
+  genres: goldenShow.genres,
+  leafCount: 16,
+  viewedLeafCount: 8,
+  childCount: 3,
+  serverId: goldenServerId,
+  serverName: goldenServerName,
+);
+
+final List<MediaItem> goldenShowSeasonList = [
+  for (final (index, title, viewed) in [(1, 'Season 1', 6), (2, 'Season 2', 2), (3, 'Season 3', 0)])
+    testMediaItem(
+      id: 'show_seasons_$index',
+      backend: MediaBackend.plex,
+      kind: MediaKind.season,
+      title: title,
+      index: index,
+      parentId: goldenShowSeasons.id,
+      parentTitle: goldenShowSeasons.title,
+      leafCount: index == 3 ? 4 : 6,
+      viewedLeafCount: viewed,
+      serverId: goldenServerId,
+      serverName: goldenServerName,
+    ),
+];
 
 /// Six episodes: watched, in progress and unwatched, with summaries of
 /// different lengths.
@@ -179,14 +312,114 @@ final List<MediaItem> goldenEpisodes = [
     ),
 ];
 
+/// The home screen's Continue Watching: an episode and a movie in progress,
+/// and an episode that is next up with no progress. Fictional titles only.
+final List<MediaItem> goldenContinueWatching = [
+  testMediaItem(
+    id: 'cw_halcyon',
+    backend: MediaBackend.plex,
+    kind: MediaKind.episode,
+    title: 'Signal Decay',
+    summary:
+        'Forty thousand people live on the last station in the belt. When the resupply ships stop coming, the '
+        'station has to decide what it is willing to become.',
+    index: 4,
+    parentIndex: 2,
+    grandparentTitle: 'Halcyon Station',
+    year: 2024,
+    contentRating: 'TV-14',
+    rating: 8.3,
+    durationMs: 51 * 60000,
+    viewOffsetMs: 28 * 60000,
+    serverId: goldenServerId,
+    serverName: goldenServerName,
+  ),
+  testMediaItem(
+    id: 'cw_lighthouse',
+    backend: MediaBackend.plex,
+    kind: MediaKind.movie,
+    title: 'The Last Lighthouse',
+    summary:
+        'When the mainland goes dark, a retired keeper rows back to the island she swore she would never see '
+        'again, and finds the light already burning.',
+    year: 2024,
+    contentRating: 'PG-13',
+    rating: 7.9,
+    durationMs: 127 * 60000,
+    viewOffsetMs: 55 * 60000,
+    serverId: goldenServerId,
+    serverName: goldenServerName,
+  ),
+  testMediaItem(
+    id: 'cw_blue_hour',
+    backend: MediaBackend.plex,
+    kind: MediaKind.episode,
+    title: 'Slack Water',
+    summary: 'The tide turns twice in one night, and the harbour town learns which of its neighbours it can trust.',
+    index: 7,
+    parentIndex: 1,
+    grandparentTitle: 'Blue Hour',
+    year: 2023,
+    contentRating: 'TV-MA',
+    durationMs: 44 * 60000,
+    serverId: goldenServerId,
+    serverName: goldenServerName,
+  ),
+  testMediaItem(
+    id: 'cw_glass_ocean',
+    backend: MediaBackend.plex,
+    kind: MediaKind.movie,
+    title: 'Glass Ocean',
+    year: 2024,
+    contentRating: 'PG',
+    durationMs: 89 * 60000,
+    viewOffsetMs: 49 * 60000,
+    serverId: goldenServerId,
+    serverName: goldenServerName,
+  ),
+];
+
+/// The home screen's hubs below Continue Watching.
+final List<MediaHub> goldenHomeHubs = [
+  MediaHub(
+    id: 'recently_added_movies',
+    title: 'Recently added',
+    type: 'movie',
+    items: goldenMovies.take(12).toList(),
+    size: 12,
+    serverId: goldenServerId,
+    serverName: goldenServerName,
+  ),
+  MediaHub(
+    id: 'more_from_the_library',
+    title: 'From your library',
+    type: 'movie',
+    items: goldenMovies.skip(12).toList(),
+    size: 12,
+    serverId: goldenServerId,
+    serverName: goldenServerName,
+  ),
+];
+
 /// A server that answers from the fixtures above, at once, with no artwork.
 class GoldenMediaServerClient implements MediaServerClient {
   late final Map<String, List<MediaItem>> _children = {
     goldenShow.id: [goldenSeason],
     goldenSeason.id: goldenEpisodes,
+    goldenShowSeasons.id: goldenShowSeasonList,
+    for (final season in goldenShowSeasonList) season.id: goldenEpisodes,
   };
 
-  late final List<MediaItem> _items = [goldenDetailMovie, goldenShow, goldenSeason, ...goldenEpisodes, ...goldenMovies];
+  late final List<MediaItem> _items = [
+    goldenDetailMovie,
+    goldenDetailMovieWithMedia,
+    goldenShow,
+    goldenShowSeasons,
+    ...goldenShowSeasonList,
+    goldenSeason,
+    ...goldenEpisodes,
+    ...goldenMovies,
+  ];
 
   @override
   ServerId get serverId => ServerId(goldenServerId);
@@ -209,7 +442,7 @@ class GoldenMediaServerClient implements MediaServerClient {
   }) async {
     final item = _find(id);
     if (item != null) onItemReady?.call(item);
-    return (item: item, onDeckEpisode: id == goldenShow.id ? goldenEpisodes[2] : null);
+    return (item: item, onDeckEpisode: id == goldenShow.id || id == goldenShowSeasons.id ? goldenEpisodes[2] : null);
   }
 
   @override
@@ -224,7 +457,82 @@ class GoldenMediaServerClient implements MediaServerClient {
   }) async => null;
 
   @override
+  Future<List<MediaItem>> fetchContinueWatching({int? count = 20, Set<String> excludedLibraryIds = const {}}) async =>
+      goldenContinueWatching;
+
+  @override
+  Future<List<MediaHub>> fetchGlobalHubs({
+    int limit = defaultHubPreviewLimit,
+    bool includePlaybackHubs = true,
+    HubFetchDiagnostics? diagnostics,
+  }) async => goldenHomeHubs;
+
+  @override
+  Future<List<MediaLibrary>> fetchLibraries() async => goldenLibraries;
+
+  @override
+  Future<List<MediaHub>> fetchLibraryHubs(
+    String libraryId, {
+    required String libraryName,
+    int limit = defaultHubPreviewLimit,
+    bool includePlaybackHubs = true,
+    MediaKind? libraryKind,
+    HubFetchDiagnostics? diagnostics,
+  }) async => const [];
+
+  /// Titles containing [query], films first.
+  @override
+  Future<List<MediaItem>> searchItems(
+    String query, {
+    int limit = 100,
+    AbortController? abort,
+    Set<String> excludedLibraryIds = const {},
+  }) async {
+    final needle = query.toLowerCase();
+    return [
+      for (final item in [...goldenMovies, goldenShow, ...goldenEpisodes])
+        if ((item.title ?? '').toLowerCase().contains(needle)) item,
+    ].take(limit).toList();
+  }
+
+  @override
+  Future<List<MediaPerson>> searchPeople(
+    String query, {
+    int limit = defaultPeopleSearchLimit,
+    AbortController? abort,
+    Set<String> excludedLibraryIds = const {},
+  }) async => const [];
+
+  /// The browse library's films.
+  @override
+  Future<LibraryPage<MediaItem>> fetchLibraryPagedContent(
+    String libraryId, {
+    required LibraryQuery query,
+    MediaKind? libraryKind,
+    AbortController? abort,
+  }) async {
+    return fakeLibraryPage(goldenBrowseMovies, start: query.offset, size: query.limit);
+  }
+
+  @override
+  Future<LibraryFilterResult> fetchLibraryFiltersWithValues(String libraryId, {MediaKind? libraryKind}) async =>
+      LibraryFilterResult.empty;
+
+  @override
+  Future<List<MediaSort>> fetchSortOptions(String libraryId, {String? libraryType}) async => const [
+    MediaSort(key: 'titleSort', title: 'Title'),
+    MediaSort(key: 'addedAt', descKey: 'addedAt:desc', title: 'Date added'),
+  ];
+
+  @override
   Future<List<MediaItem>> fetchChildren(String parentId) async => _children[parentId] ?? const [];
+
+  /// Only [goldenDetailMovieWithMedia] has extras. Every other item fails the
+  /// way an unanswered call always has here, so its detail page is unchanged.
+  @override
+  Future<List<MediaItem>> fetchExtras(String id) => id == goldenDetailMovieWithMedia.id
+      ? Future.value([goldenTrailer])
+      : super.noSuchMethod(Invocation.method(#fetchExtras, [id])) as Future<List<MediaItem>>;
 
   @override
   Future<LibraryPage<MediaItem>> fetchChildrenPage(

@@ -158,15 +158,19 @@ void main() {
     expect(find.text(onCard), findsOneWidget);
     // The colours the failing pairs are drawn from carry a marker.
     for (final slot in [MonoPaletteSlot.text, MonoPaletteSlot.bg, MonoPaletteSlot.surface]) {
+      await _scrollTo(tester, _slot(slot));
       expect(find.descendant(of: _slot(slot), matching: find.byIcon(Symbols.warning_rounded)), findsOneWidget);
     }
+    await _scrollTo(tester, _hexField);
 
     await _enterHex(tester, '#767676');
     expect(find.textContaining(t.themeEditor.contrast.textOnBg), findsNothing);
     expect(find.textContaining(t.themeEditor.contrast.textOnSurface), findsNothing);
 
     // An accent too close to the page warns against the 3:1 bar instead.
+    await _scrollTo(tester, _slot(MonoPaletteSlot.accent));
     await _tapVisible(tester, _slot(MonoPaletteSlot.accent));
+    await _scrollTo(tester, _hexField);
     await _enterHex(tester, '#959595');
     expect(find.text(_warning(t.themeEditor.contrast.accentOnBg, '2.9', '3')), findsOneWidget);
     await _enterHex(tester, '#949494');

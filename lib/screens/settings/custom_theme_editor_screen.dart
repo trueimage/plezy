@@ -36,6 +36,7 @@ const _sourceThemes = [
   settings.ThemeMode.light,
   settings.ThemeMode.dark,
   settings.ThemeMode.oled,
+  settings.ThemeMode.nocturne,
   settings.ThemeMode.ember,
   settings.ThemeMode.glacier,
   settings.ThemeMode.forest,

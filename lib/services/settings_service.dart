@@ -40,16 +40,21 @@ import '../utils/platform_detector.dart';
 import 'trackers/tracker_constants.dart';
 import '../profiles/profile.dart';
 import '../theme/mono_theme.dart' show MonoPalette;
+import '../theme/nocturne_theme.dart' show NocturneAccent;
+import '../theme/plezy_layout.dart' show LayoutVariantSetting;
 import '../watch_together/services/watch_party_relays.dart';
 
 /// The app theme. Value names are the persisted ids. [system] follows the
 /// platform between [light] and [dark]; every other value is one fixed palette,
 /// [custom] the one stored in [SettingsService.customThemePalette].
+/// [nocturne] is a whole theme with its own type, focus and layout, not only a
+/// palette.
 enum ThemeMode {
   system,
   light,
   dark,
   oled,
+  nocturne,
   ember,
   glacier,
   forest,
@@ -57,10 +62,10 @@ enum ThemeMode {
   paper,
   custom;
 
-  /// The presets and Custom are Supporter perks; the built-ins are free in
-  /// every build.
+  /// The presets and Custom are Supporter perks; the built-ins (Nocturne
+  /// among them) are free in every build.
   bool get isSupporterPerk => switch (this) {
-    system || light || dark || oled => false,
+    system || light || dark || oled || nocturne => false,
     ember || glacier || forest || plum || paper || custom => true,
   };
 }
@@ -983,6 +988,23 @@ class SettingsService extends BaseSharedPreferencesService {
     encode: (palette) => json.encode(palette?.toJson()),
     decode: (raw) => raw == null ? null : MonoPalette.fromJson(raw),
   );
+
+  /// The layout the screens are drawn in: [LayoutVariantSetting.auto] follows
+  /// the theme (Nocturne draws its own, every other theme the classic one).
+  /// Stored for a later override; nothing in the app changes it yet.
+  static const layoutVariant = EnumPref<LayoutVariantSetting>(
+    'layout_variant',
+    values: LayoutVariantSetting.values,
+    defaultValue: LayoutVariantSetting.auto,
+  );
+
+  /// Nocturne's own settings: a pure black canvas, and the accent.
+  static const nocturneTrueBlack = BoolPref('nocturne_true_black');
+  static const nocturneAccent = EnumPref<NocturneAccent>(
+    'nocturne_accent',
+    values: NocturneAccent.values,
+    defaultValue: NocturneAccent.champagne,
+  );
   static const videoPlayerNavigationEnabled = BoolPref(
     'video_player_navigation_enabled',
     defaultValueProvider: PlatformDetector.isTV,
@@ -1558,6 +1580,9 @@ class SettingsService extends BaseSharedPreferencesService {
     scopedPlayerPrefValues,
     themeMode,
     customThemePalette,
+    layoutVariant,
+    nocturneTrueBlack,
+    nocturneAccent,
     videoPlayerNavigationEnabled,
     playbackBufferTier,
     libraryDensity,

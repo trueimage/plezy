@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:plezy/providers/theme_provider.dart';
 import 'package:plezy/services/settings_service.dart' as settings;
 import 'package:plezy/theme/mono_theme.dart';
+import 'package:plezy/theme/nocturne_theme.dart';
 import 'package:plezy/theme/plezy_theme_spec.dart';
 
 MonoPalette _copyOf(MonoPalette p) => MonoPalette(
@@ -57,9 +58,11 @@ void main() {
   });
 
   group('ThemeProvider spec resolution', () {
-    test('specFor wraps paletteFor, null for System', () {
+    test('specFor wraps paletteFor, null for System; Nocturne carries its whole spec', () {
       expect(ThemeProvider.specFor(settings.ThemeMode.system), isNull);
+      expect(ThemeProvider.specFor(settings.ThemeMode.nocturne), NocturneTheme.spec());
       for (final mode in settings.ThemeMode.values) {
+        if (mode == settings.ThemeMode.nocturne) continue;
         final palette = ThemeProvider.paletteFor(mode, customPalette: MonoPalette.forest);
         expect(
           ThemeProvider.specFor(mode, customPalette: MonoPalette.forest),

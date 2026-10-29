@@ -23,7 +23,14 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
   Widget _buildAvailableActionButtons(BuildContext context, MediaItem metadata) {
     final isTv = PlatformDetector.isTV();
     final tvScale = TvLayoutConstants.scaleOf(context);
-    final actionSize = isTv ? _tvDetailActionSize * tvScale : 48.0;
+    // Nocturne's TV row: a labelled Play or Resume pill, then outlined
+    // circles and pills that invert when focused.
+    final nocturneTv = isTv && PlezyLayout.isNocturne(context);
+    final actionSize = isTv
+        ? (PlezyLayout.isNocturne(context)
+              ? _NocturneMediaDetail.nocturneActionSize * PlezyLayout.designScaleOf(context)
+              : _tvDetailActionSize * tvScale)
+        : 48.0;
     final playButtonLabel = _getPlayButtonLabel(metadata);
     final playIcon = _getPlayButtonIcon(metadata);
     final playActionLabel = playIcon == Symbols.resume_rounded ? t.common.resume : t.common.play;
@@ -147,6 +154,24 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
         );
       }
 
+      if (nocturneTv) {
+        final tk = tokens(context);
+        final idle = SurfaceTokens.of(context).overlaySurface ?? tk.surface;
+        return ButtonStyle(
+          padding: WidgetStatePropertyAll(padding ?? EdgeInsets.zero),
+          minimumSize: WidgetStatePropertyAll(Size.square(actionSize)),
+          maximumSize: padding == null ? WidgetStatePropertyAll(Size.square(actionSize)) : null,
+          fixedSize: padding == null ? WidgetStatePropertyAll(Size.square(actionSize)) : null,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+          overlayColor: noOverlay,
+          backgroundColor: WidgetStatePropertyAll(showFocus ? tk.text : idle),
+          foregroundColor: WidgetStatePropertyAll(showFocus ? tk.bg : foregroundColor ?? tk.text),
+          side: WidgetStatePropertyAll(BorderSide(color: showFocus ? tk.text : tk.outline.withValues(alpha: 0.24))),
+          shape: WidgetStatePropertyAll(shape ?? const CircleBorder()),
+        );
+      }
+
       return ButtonStyle(
         padding: padding != null ? WidgetStatePropertyAll(padding) : null,
         minimumSize: WidgetStatePropertyAll(padding == null ? Size.square(actionSize) : Size(0, actionSize)),
@@ -170,7 +195,46 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
 
     final gap = isTv ? 8.0 * tvScale : 12.0;
 
+    Widget nocturnePill(
+      FocusableActionBuildState state, {
+      required String semanticsLabel,
+      required VoidCallback? onTap,
+      required NocturneButtonStyle style,
+      required IconData icon,
+      required String label,
+      String? detail,
+    }) {
+      return Semantics(
+        label: detail == null ? semanticsLabel : '$semanticsLabel, $detail',
+        button: true,
+        onTap: onTap,
+        excludeSemantics: true,
+        child: GestureDetector(
+          onTap: onTap,
+          child: NocturneButtonFace(
+            style: style,
+            icon: icon,
+            label: label,
+            detail: detail,
+            focused: state.showFocus,
+            height: actionSize,
+          ),
+        ),
+      );
+    }
+
     Widget playButton(FocusableActionBuildState state) {
+      if (nocturneTv) {
+        return nocturnePill(
+          state,
+          semanticsLabel: playSemanticsLabel,
+          onTap: onPlayPressed,
+          style: NocturneButtonStyle.primary,
+          icon: Symbols.play_arrow_rounded,
+          label: playActionLabel,
+          detail: _nocturnePlayDetail(metadata, playButtonLabel),
+        );
+      }
       return Semantics(
         label: playSemanticsLabel,
         button: true,
@@ -253,7 +317,21 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
       builder: (context, state) => playButton(state),
     );
 
-    final versionAction = showVersionSplit
+    final versionAction = showVersionSplit && nocturneTv
+        ? FocusableAction(
+            debugLabel: 'detail_play_version',
+            onPressed: onPlayVersionPressed,
+            builder: (context, state) => nocturnePill(
+              state,
+              semanticsLabel: t.mediaMenu.playVersion,
+              onTap: onPlayVersionPressed,
+              style: NocturneButtonStyle.secondary,
+              icon: Symbols.layers_rounded,
+              label: t.nocturne.versionsButton,
+              detail: '${metadata.mediaVersions!.length}',
+            ),
+          )
+        : showVersionSplit
         ? FocusableAction(
             debugLabel: 'detail_play_version',
             spacingBefore: splitGap,
@@ -264,6 +342,19 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
 
     final trailerAction = primaryTrailer == null
         ? null
+        : nocturneTv
+        ? FocusableAction(
+            debugLabel: 'detail_trailer',
+            onPressed: onPlayTrailer,
+            builder: (context, state) => nocturnePill(
+              state,
+              semanticsLabel: t.tooltips.playTrailer,
+              onTap: onPlayTrailer,
+              style: NocturneButtonStyle.secondary,
+              icon: Symbols.theaters_rounded,
+              label: t.nocturne.trailer,
+            ),
+          )
         : FocusableAction(
             debugLabel: 'detail_trailer',
             onPressed: onPlayTrailer,

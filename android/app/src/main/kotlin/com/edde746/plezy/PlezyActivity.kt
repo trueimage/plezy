@@ -991,6 +991,7 @@ class PlezyActivity : FlutterActivity() {
             val themeId = when (mode) {
               "dark" -> R.style.SplashTheme_Dark
               "oled" -> R.style.SplashTheme_Oled
+              "nocturne" -> R.style.SplashTheme_Nocturne
               "light" -> R.style.SplashTheme_Light
               "system" -> android.content.res.Resources.ID_NULL
               else -> android.content.res.Resources.ID_NULL

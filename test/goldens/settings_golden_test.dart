@@ -17,13 +17,13 @@ import 'golden_harness.dart';
 void main() {
   goldenMatrix(
     'settings_appearance',
-    themes: lightDarkGoldenThemes,
+    themes: screenGoldenThemes,
     body: (tester, golden) => _pumpSettings(tester, golden, const AppearanceSettingsScreen()),
   );
 
   goldenMatrix(
     'theme_picker',
-    themes: lightDarkGoldenThemes,
+    themes: screenGoldenThemes,
     body: (tester, golden) => _pumpSettings(tester, golden, ThemeSettingsScreen(openSupporterSheet: (_) async {})),
   );
 }

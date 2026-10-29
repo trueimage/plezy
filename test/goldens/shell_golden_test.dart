@@ -24,7 +24,7 @@ void main() {
   // desktop and TV, the label-less bottom bar on the phone.
   goldenMatrix(
     'navigation',
-    themes: lightDarkGoldenThemes,
+    themes: screenGoldenThemes,
     body: (tester, golden) async {
       await SettingsService.instance.write(SettingsService.alwaysKeepSidebarOpen, true);
       await SettingsService.instance.write(SettingsService.showNavBarLabels, false);
@@ -52,7 +52,7 @@ void main() {
 
   goldenMatrix(
     'dialog',
-    themes: lightDarkGoldenThemes,
+    themes: screenGoldenThemes,
     body: (tester, golden) async {
       await pumpGoldenShell(tester, golden);
       final context = tester.element(find.byType(GoldenMovieGrid));
@@ -69,7 +69,7 @@ void main() {
 
   goldenMatrix(
     'overlay_sheet',
-    themes: lightDarkGoldenThemes,
+    themes: screenGoldenThemes,
     body: (tester, golden) async {
       await pumpGoldenShell(tester, golden);
       final context = tester.element(find.byType(GoldenMovieGrid));

@@ -50,7 +50,7 @@ class TypeSize {
 /// optional brand font.
 ///
 /// Read through [TypeScale.of], which falls back to [fallback] when a theme
-/// carries none. [fallback] holds the sizes every built-in theme draws.
+/// carries none.
 @immutable
 class TypeScale extends ThemeExtension<TypeScale> {
   const TypeScale({
@@ -86,7 +86,7 @@ class TypeScale extends ThemeExtension<TypeScale> {
     this.navLibraryServer = const TypeSize(regular: 9),
   });
 
-  /// The sizes every built-in theme draws, in the platform font.
+  /// The shared default sizes, in the platform font.
   static const fallback = TypeScale();
 
   /// The theme's [TypeScale], or [fallback] when it carries none.

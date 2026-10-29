@@ -1448,9 +1448,10 @@ class _MainScreenState extends State<MainScreen>
   }
 
   double _sideNavigationWidth(BuildContext context, {required bool alwaysExpanded}) {
-    final isExpanded = alwaysExpanded || _isSidebarFocused;
+    // A rail that opens over the content (Nocturne on TV) never moves it.
+    final isExpanded = alwaysExpanded || (_isSidebarFocused && !SideNavigationRailState.overlaysContent(context));
     return isExpanded
-        ? SideNavigationRailState.expandedWidth
+        ? SideNavigationRailState.expandedWidthForContext(context)
         : SideNavigationRailState.collapsedWidthForContext(context);
   }
 
@@ -2032,7 +2033,7 @@ class _MainScreenState extends State<MainScreen>
         builder: (context, alwaysExpanded, _) {
           final targetContentOffset = _sideNavigationWidth(context, alwaysExpanded: alwaysExpanded);
           final reservedContentOffset = alwaysExpanded
-              ? SideNavigationRailState.expandedWidth
+              ? SideNavigationRailState.expandedWidthForContext(context)
               : SideNavigationRailState.collapsedWidthForContext(context);
 
           return OverlaySheetHost(
@@ -2116,7 +2117,11 @@ class _MainScreenState extends State<MainScreen>
                           Positioned.fill(
                             child: IgnorePointer(
                               child: AnimatedOpacity(
-                                opacity: _isSidebarFloatingPanel ? 1.0 : 0.0,
+                                opacity:
+                                    _isSidebarFloatingPanel ||
+                                        (_isSidebarFocused && SideNavigationRailState.overlaysContent(context))
+                                    ? 1.0
+                                    : 0.0,
                                 duration: SideNavigationRailState.expandDuration,
                                 curve: SideNavigationRailState.expandCurve,
                                 child: const ColoredBox(color: Color(0x66000000)),

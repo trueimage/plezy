@@ -6,7 +6,10 @@ import 'package:flutter/services.dart';
 import '../../focus/key_event_utils.dart';
 import '../../i18n/strings.g.dart';
 import '../../media/library_first_character.dart';
+import '../../theme/mono_tokens.dart';
+import '../../theme/plezy_layout.dart';
 import '../../widgets/clickable_cursor.dart';
+import '../../widgets/nocturne/nocturne_spotlight.dart' show NocturneMetrics;
 import 'alpha_jump_helper.dart';
 
 /// Vertical strip of letters for jumping through sorted library items.
@@ -38,6 +41,11 @@ class AlphaJumpBar extends StatefulWidget {
     this.onNavigateLeft,
     this.onBack,
   });
+
+  /// The bar's width: Nocturne's 44 px rail on TV (at 1080p), 28 on desktop.
+  static double widthOf(BuildContext context) => PlezyLayout.isNocturne(context)
+      ? NocturneMetrics.of(context).pick(tv: PlezyLayout.of(context).jumpRailWidth, desktop: 28, phone: 20)
+      : 20;
 
   @override
   State<AlphaJumpBar> createState() => _AlphaJumpBarState();
@@ -193,6 +201,10 @@ class _AlphaJumpBarState extends State<AlphaJumpBar> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final nocturne = PlezyLayout.isNocturne(context);
+    // Only Nocturne reads the mono tokens; classic draws from the scheme.
+    final tk = nocturne ? tokens(context) : null;
+    final width = AlphaJumpBar.widthOf(context);
 
     return Focus(
       focusNode: widget.focusNode,
@@ -215,8 +227,9 @@ class _AlphaJumpBarState extends State<AlphaJumpBar> {
 
           final currentLetter = _nearestDisplayed(widget.currentLetter);
           final letterSlotHeight = constraints.maxHeight / _displayed.length;
-          final markerSize = (letterSlotHeight - 2).clamp(10.0, 18.0).toDouble();
-          final fontSize = (letterSlotHeight * 0.58).clamp(7.0, 10.0).toDouble();
+          // Nocturne sizes the letters to its wider rail.
+          final markerSize = (letterSlotHeight - 2).clamp(10.0, nocturne ? width - 6 : 18.0).toDouble();
+          final fontSize = (letterSlotHeight * 0.58).clamp(7.0, nocturne ? width * 0.5 : 10.0).toDouble();
 
           return Semantics(
             container: true,
@@ -239,11 +252,18 @@ class _AlphaJumpBarState extends State<AlphaJumpBar> {
                   }
                 },
                 child: Container(
-                  width: 20,
+                  width: width,
                   decoration: BoxDecoration(
                     color: colorScheme.surface.withValues(alpha: 0.7),
-                    borderRadius: const BorderRadius.all(Radius.circular(10)),
+                    borderRadius: BorderRadius.all(Radius.circular(width / 2)),
                   ),
+                  // A foreground outline takes no room from the letter slots.
+                  foregroundDecoration: nocturne
+                      ? BoxDecoration(
+                          borderRadius: BorderRadius.all(Radius.circular(width / 2)),
+                          border: Border.all(color: tk!.outline),
+                        )
+                      : null,
                   child: Column(
                     mainAxisAlignment: .spaceEvenly,
                     children: List.generate(_displayed.length, (i) {
@@ -253,7 +273,10 @@ class _AlphaJumpBarState extends State<AlphaJumpBar> {
 
                       BoxDecoration? decoration;
                       if (isHighlighted) {
-                        decoration = BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle);
+                        // Nocturne inverts the focused letter, like its other focus.
+                        decoration = BoxDecoration(color: tk?.text ?? colorScheme.primary, shape: BoxShape.circle);
+                      } else if (isCurrent && nocturne) {
+                        decoration = null;
                       } else if (isCurrent) {
                         decoration = BoxDecoration(
                           color: colorScheme.primary.withValues(alpha: 0.3),
@@ -263,9 +286,9 @@ class _AlphaJumpBarState extends State<AlphaJumpBar> {
 
                       Color letterColor;
                       if (isHighlighted) {
-                        letterColor = colorScheme.onPrimary;
+                        letterColor = tk?.bg ?? colorScheme.onPrimary;
                       } else if (isCurrent) {
-                        letterColor = colorScheme.primary;
+                        letterColor = tk?.accent ?? colorScheme.primary;
                       } else {
                         letterColor = colorScheme.onSurface;
                       }

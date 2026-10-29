@@ -13,6 +13,8 @@ import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/providers/theme_provider.dart';
 import 'package:plezy/services/settings_service.dart' as settings;
 import 'package:plezy/theme/mono_theme.dart';
+import 'package:plezy/theme/nocturne_theme.dart';
+import 'package:plezy/theme/plezy_theme_spec.dart';
 import 'package:plezy/utils/platform_detector.dart';
 import 'package:plezy/utils/wall_clock.dart';
 import 'package:plezy/widgets/system_clock.dart';
@@ -52,15 +54,23 @@ enum GoldenFormFactor {
   TargetPlatform get platform => this == desktop ? TargetPlatform.linux : TargetPlatform.android;
 }
 
-/// A fixed palette under test, keyed by the [settings.ThemeMode] that selects it.
+/// A fixed theme under test, keyed by the [settings.ThemeMode] that selects it,
+/// plus a [variant] suffix for a theme's own settings (Nocturne's true black
+/// and accent).
 @immutable
 class GoldenTheme {
-  const GoldenTheme(this.mode, this.palette);
+  const GoldenTheme(this.mode, this.spec, {this.variant, this.nocturne = NocturneOptions.defaults});
 
   final settings.ThemeMode mode;
-  final MonoPalette palette;
+  final PlezyThemeSpec spec;
+  final String? variant;
 
-  String get name => mode.name;
+  /// Nocturne's own settings, stored for the case so the screens read them.
+  final NocturneOptions nocturne;
+
+  MonoPalette get palette => spec.palette;
+
+  String get name => variant == null ? mode.name : '${mode.name}_$variant';
 }
 
 /// A deliberately saturated custom palette, so a refactor that drops any of
@@ -78,15 +88,32 @@ const goldenCustomPalette = MonoPalette(
 /// is not a palette of its own: it resolves to Light or Dark.
 final List<GoldenTheme> allGoldenThemes = [
   for (final mode in settings.ThemeMode.values)
-    if (ThemeProvider.paletteFor(mode, customPalette: goldenCustomPalette) case final palette?)
-      GoldenTheme(mode, palette),
+    if (ThemeProvider.specFor(mode, customPalette: goldenCustomPalette) case final spec?) GoldenTheme(mode, spec),
 ];
 
-/// The two built-in themes every screen is captured in.
-final List<GoldenTheme> lightDarkGoldenThemes = [
+/// Nocturne with its default settings.
+final GoldenTheme nocturneGoldenTheme = allGoldenThemes.singleWhere(
+  (theme) => theme.mode == settings.ThemeMode.nocturne,
+);
+
+/// The themes every screen is captured in: Light and Dark, the two built-ins
+/// of opposite brightness, and Nocturne, which draws its own layout.
+final List<GoldenTheme> screenGoldenThemes = [
   for (final theme in allGoldenThemes)
-    if (theme.mode == settings.ThemeMode.light || theme.mode == settings.ThemeMode.dark) theme,
+    if (const {settings.ThemeMode.light, settings.ThemeMode.dark, settings.ThemeMode.nocturne}.contains(theme.mode))
+      theme,
 ];
+
+/// Nocturne with its True black and Ivory settings.
+final GoldenTheme nocturneTrueBlackIvoryGoldenTheme = () {
+  const options = NocturneOptions(trueBlack: true, accent: NocturneAccent.ivory);
+  return GoldenTheme(
+    settings.ThemeMode.nocturne,
+    NocturneTheme.spec(options),
+    variant: 'trueblack_ivory',
+    nocturne: options,
+  );
+}();
 
 /// One cell of a golden matrix.
 @immutable
@@ -204,6 +231,8 @@ Future<void> setUpGoldenCase(WidgetTester tester, GoldenCase golden) async {
   final service = await settings.SettingsService.getInstance();
   await service.write(settings.SettingsService.themeMode, golden.theme.mode);
   await service.write(settings.SettingsService.customThemePalette, goldenCustomPalette);
+  await service.write(settings.SettingsService.nocturneTrueBlack, golden.theme.nocturne.trueBlack);
+  await service.write(settings.SettingsService.nocturneAccent, golden.theme.nocturne.accent);
   LocaleSettings.setLocaleSync(AppLocale.en);
 
   final formFactor = golden.formFactor;
@@ -260,7 +289,7 @@ Future<void> pumpGoldenApp(
   Widget app = MaterialApp(
     navigatorKey: navigatorKey,
     debugShowCheckedModeBanner: false,
-    theme: goldenThemeData(golden.theme.palette),
+    theme: goldenThemeData(golden.theme.spec),
     home: home,
   );
   if (providers.isNotEmpty) app = MultiProvider(providers: providers, child: app);
@@ -281,12 +310,13 @@ Future<void> pumpGoldenApp(
 /// family in its box-glyph test font, whatever fonts are loaded.
 const goldenDefaultFontFamily = 'Roboto';
 
-/// [monoTheme] for [palette], with [goldenDefaultFontFamily] filled in on the
+/// The theme [spec] builds, with [goldenDefaultFontFamily] filled in on the
 /// theme's text styles that name no family: the text themes and the app bar
 /// title. Nothing else differs, so a change to any size, weight, spacing or
-/// colour still shows in the images.
-ThemeData goldenThemeData(MonoPalette palette) {
-  final theme = monoTheme(palette);
+/// colour still shows in the images. A theme with its own font (Nocturne)
+/// names a family everywhere and keeps it.
+ThemeData goldenThemeData(PlezyThemeSpec spec) {
+  final theme = monoThemeFromSpec(spec);
   return theme.copyWith(
     textTheme: _withDefaultFamily(theme.textTheme),
     primaryTextTheme: _withDefaultFamily(theme.primaryTextTheme),

@@ -157,6 +157,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/licenses/SpatialAudioBridge.txt
+    - assets/licenses/Manrope-OFL.txt
     - assets/plezy.png
     - assets/plezy_adaptive_foreground.svg
     - assets/plex_chevron.svg
@@ -189,3 +190,8 @@ flutter:
     - family: Go Noto Current Hangul
       fonts:
         - asset: assets/go-noto-kurrent-hangul.ttf
+    # The Nocturne theme's face (lib/theme/nocturne_theme.dart): one variable
+    # font, weights 200-800, SIL OFL 1.1 (assets/licenses/Manrope-OFL.txt).
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope-Variable.ttf
